@@ -1,253 +1,388 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Minimalist Sudoku</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #f4f4f4;
-      color: #333;
-      margin: 0;
-      padding: 20px;
-    }
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-    h1 {
-      margin-bottom: 10px;
-    }
+// Minimalistic Sudoku Game - Single-file React component
+// Usage: paste into a React project (Create React App / Vite). TailwindCSS classes are used for styling.
+// Default export at bottom.
 
-    #sudoku {
-      display: grid;
-      grid-template-columns: repeat(9, 40px);
-      grid-template-rows: repeat(9, 40px);
-      gap: 2px;
-      margin: 20px 0;
-    }
+// --- Sudoku generator & solver (backtracking) ---
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
 
-    .cell {
-      width: 40px;
-      height: 40px;
-      text-align: center;
-      font-size: 18px;
-      border: 1px solid #ccc;
-      background-color: white;
-    }
+function range(n) {
+  return [...Array(n).keys()];
+}
 
-    .cell.fixed {
-      background-color: #e9e9e9;
-      font-weight: bold;
-      color: #000;
-    }
+function copyBoard(board) {
+  return board.map((r) => r.slice());
+}
 
-    .cell.wrong {
-      background-color: #ffe6e6;
-    }
+function isSafe(board, row, col, num) {
+  for (let x = 0; x < 9; x++) {
+    if (board[row][x] === num) return false;
+    if (board[x][col] === num) return false;
+  }
+  const startRow = row - (row % 3);
+  const startCol = col - (col % 3);
+  for (let r = 0; r < 3; r++)
+    for (let c = 0; c < 3; c++)
+      if (board[startRow + r][startCol + c] === num) return false;
+  return true;
+}
 
-    #controls {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-    }
-
-    button {
-      padding: 8px 14px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #333;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-
-    button:disabled {
-      background-color: #999;
-      cursor: not-allowed;
-    }
-  </style>
-</head>
-<body>
-
-  <h1>🧩 Minimalist Sudoku</h1>
-  <div id="sudoku"></div>
-
-  <div id="controls">
-    <button onclick="loadNewPuzzle()">Next Puzzle</button>
-    <button onclick="giveHint()" id="hintBtn">Hint (3)</button>
-  </div>
-
-  <script>
-    const boardElement = document.getElementById('sudoku');
-    let originalBoard = [];
-    let solutionBoard = [];
-    let hintsLeft = 3;
-
-    // Generate an empty board
-    function createEmptyBoard() {
-      const board = [];
-      for (let i = 0; i < 9; i++) {
-        board.push(Array(9).fill(0));
-      }
-      return board;
-    }
-
-    // Generate a complete board using backtracking
-    function generateFullBoard(board) {
-      const findEmpty = () => {
-        for (let r = 0; r < 9; r++) {
-          for (let c = 0; c < 9; c++) {
-            if (board[r][c] === 0) return [r, c];
-          }
-        }
-        return null;
-      };
-
-      const shuffle = (array) => {
-        for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-      };
-
-      const isValid = (num, row, col) => {
-        for (let i = 0; i < 9; i++) {
-          if (board[row][i] === num || board[i][col] === num) return false;
-        }
-
-        const startRow = Math.floor(row / 3) * 3;
-        const startCol = Math.floor(col / 3) * 3;
-        for (let i = startRow; i < startRow + 3; i++) {
-          for (let j = startCol; j < startCol + 3; j++) {
-            if (board[i][j] === num) return false;
-          }
-        }
-        return true;
-      };
-
-      const solve = () => {
-        const empty = findEmpty();
-        if (!empty) return true;
-
-        const [row, col] = empty;
-        const numbers = shuffle([1,2,3,4,5,6,7,8,9]);
-        for (let num of numbers) {
-          if (isValid(num, row, col)) {
+function solveSudoku(board) {
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      if (board[row][col] === 0) {
+        for (let num = 1; num <= 9; num++) {
+          if (isSafe(board, row, col, num)) {
             board[row][col] = num;
-            if (solve()) return true;
+            if (solveSudoku(board)) return true;
             board[row][col] = 0;
           }
         }
         return false;
-      };
-
-      solve();
-      return board;
-    }
-
-    // Remove numbers from full board to create a playable puzzle
-    function makePuzzle(fullBoard, clues = 30) {
-      const puzzle = fullBoard.map(row => row.slice());
-      let cellsToRemove = 81 - clues;
-
-      while (cellsToRemove > 0) {
-        const row = Math.floor(Math.random() * 9);
-        const col = Math.floor(Math.random() * 9);
-        if (puzzle[row][col] !== 0) {
-          puzzle[row][col] = 0;
-          cellsToRemove--;
-        }
-      }
-
-      return puzzle;
-    }
-
-    function renderBoard(puzzle) {
-      boardElement.innerHTML = "";
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          const input = document.createElement("input");
-          input.classList.add("cell");
-          input.setAttribute("maxlength", "1");
-          input.dataset.row = r;
-          input.dataset.col = c;
-
-          if (puzzle[r][c] !== 0) {
-            input.value = puzzle[r][c];
-            input.classList.add("fixed");
-            input.disabled = true;
-          } else {
-            input.addEventListener("input", onInput);
-          }
-
-          boardElement.appendChild(input);
-        }
       }
     }
+  }
+  return true;
+}
 
-    function onInput(e) {
-      const input = e.target;
-      const val = parseInt(input.value);
-      const row = parseInt(input.dataset.row);
-      const col = parseInt(input.dataset.col);
-
-      if (isNaN(val) || val < 1 || val > 9) {
-        input.value = "";
-        return;
+function generateFullBoard() {
+  const board = Array.from({ length: 9 }, () => Array(9).fill(0));
+  const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  // Fill diagonal 3x3 boxes first for speed
+  for (let k = 0; k < 9; k += 3) {
+    const nums = shuffle(numbers.slice());
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) board[k + r][k + c] = nums[r * 3 + c];
+  }
+  // Solve the rest using backtracking (randomized)
+  function fillRemaining(r, c) {
+    if (c >= 9) {
+      c = 0;
+      r++;
+      if (r >= 9) return true;
+    }
+    if (board[r][c] !== 0) return fillRemaining(r, c + 1);
+    const nums = shuffle(numbers.slice());
+    for (let num of nums) {
+      if (isSafe(board, r, c, num)) {
+        board[r][c] = num;
+        if (fillRemaining(r, c + 1)) return true;
+        board[r][c] = 0;
       }
+    }
+    return false;
+  }
+  fillRemaining(0, 0);
+  return board;
+}
 
-      // Mark wrong input
-      if (val !== solutionBoard[row][col]) {
-        input.classList.add("wrong");
+function removeCells(board, clues = 35) {
+  // Remove cells while ensuring a single solution is likely. We'll do a simple random removal until we have the desired clues.
+  const puzzle = copyBoard(board);
+  const cells = [];
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push([r, c]);
+  shuffle(cells);
+  let removals = 81 - clues;
+  for (let i = 0; i < cells.length && removals > 0; i++) {
+    const [r, c] = cells[i];
+    const backup = puzzle[r][c];
+    puzzle[r][c] = 0;
+    // quick uniqueness-ish check: try solving; if solvable, keep removed (this doesn't strictly ensure single solution but good tradeoff for speed)
+    const attempt = copyBoard(puzzle);
+    if (solveSudoku(attempt)) {
+      removals--;
+    } else {
+      puzzle[r][c] = backup;
+    }
+  }
+  return puzzle;
+}
+
+function generatePuzzle(clues = 35) {
+  const full = generateFullBoard();
+  const solution = copyBoard(full);
+  const puzzle = removeCells(full, clues);
+  return { puzzle, solution };
+}
+
+// --- Simple audio feedback using WebAudio ---
+function useBeep() {
+  const ctxRef = useRef(null);
+  useEffect(() => {
+    ctxRef.current = null; // created on demand due to autoplay policies
+  }, []);
+  function beep(type = "correct") {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!ctxRef.current) ctxRef.current = new AudioContext();
+      const ctx = ctxRef.current;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.type = type === "correct" ? "sine" : "triangle";
+      o.frequency.value = type === "correct" ? 880 : 200;
+      g.gain.value = 0.0001;
+      const now = ctx.currentTime;
+      g.gain.linearRampToValueAtTime(0.08, now + 0.01);
+      o.start(now);
+      o.stop(now + 0.12);
+    } catch (e) {
+      // ignore if AudioContext blocked
+    }
+  }
+  return beep;
+}
+
+// --- Helper to format time ---
+function formatTime(seconds) {
+  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const ss = String(seconds % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
+// --- Main component ---
+export default function MinimalisticSudokuGame() {
+  const [seed, setSeed] = useState(() => Date.now());
+  const [clues, setClues] = useState(35); // can tweak for easier/harder
+  const [initial, setInitial] = useState(() => Array.from({ length: 9 }, () => Array(9).fill(0)));
+  const [solution, setSolution] = useState(() => Array.from({ length: 9 }, () => Array(9).fill(0)));
+  const [board, setBoard] = useState(() => Array.from({ length: 9 }, () => Array(9).fill(0)));
+  const [selected, setSelected] = useState([null, null]);
+  const [hintsLeft, setHintsLeft] = useState(3);
+  const [showWrong, setShowWrong] = useState(false);
+  const [highlightValue, setHighlightValue] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const [seconds, setSeconds] = useState(0);
+  const timerRef = useRef(null);
+  const startedRef = useRef(false);
+  const bestKey = "sudoku_best_time";
+  const [bestTime, setBestTime] = useState(() => {
+    const v = localStorage.getItem(bestKey);
+    return v ? Number(v) : null;
+  });
+
+  const beep = useBeep();
+
+  // generate puzzle when seed or clues changes
+  useEffect(() => {
+    const { puzzle, solution } = generatePuzzle(clues);
+    setInitial(puzzle);
+    setSolution(solution);
+    setBoard(copyBoard(puzzle));
+    setHintsLeft(3);
+    setSeconds(0);
+    setShowWrong(false);
+    setSelected([null, null]);
+    setHighlightValue(null);
+    startedRef.current = false;
+    clearInterval(timerRef.current);
+  }, [seed, clues]);
+
+  // Timer
+  useEffect(() => {
+    if (isPaused) return;
+    if (!startedRef.current) return;
+    timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(timerRef.current);
+  }, [isPaused]);
+
+  useEffect(() => () => clearInterval(timerRef.current), []);
+
+  const selectCell = (r, c) => {
+    if (isPaused) return;
+    setSelected([r, c]);
+    if (!startedRef.current) {
+      startedRef.current = true;
+      setSeconds(0);
+    }
+  };
+
+  const onNumberPress = (n) => {
+    const [r, c] = selected;
+    if (r === null || c === null) return;
+    if (initial[r][c] !== 0) return; // cannot change default
+    const newBoard = copyBoard(board);
+    newBoard[r][c] = n;
+    setBoard(newBoard);
+    setShowWrong(false);
+  };
+
+  const onBackspace = () => {
+    const [r, c] = selected;
+    if (r === null || c === null) return;
+    if (initial[r][c] !== 0) return;
+    const newBoard = copyBoard(board);
+    newBoard[r][c] = 0;
+    setBoard(newBoard);
+  };
+
+  const useHint = () => {
+    if (hintsLeft <= 0) return;
+    const [r, c] = selected;
+    if (r === null || c === null) return;
+    if (initial[r][c] !== 0) return;
+    const newBoard = copyBoard(board);
+    newBoard[r][c] = solution[r][c];
+    setBoard(newBoard);
+    setHintsLeft((h) => h - 1);
+  };
+
+  const submit = () => {
+    // check for wrongs
+    const wrongs = [];
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+      if (board[r][c] !== 0 && board[r][c] !== solution[r][c]) wrongs.push([r, c]);
+    }
+    setShowWrong(true);
+    if (wrongs.length === 0) {
+      // solved - stop timer and store best time
+      clearInterval(timerRef.current);
+      startedRef.current = false;
+      beep("correct");
+      if (bestTime === null || seconds < bestTime) {
+        localStorage.setItem(bestKey, String(seconds));
+        setBestTime(seconds);
+      }
+    } else {
+      beep("wrong");
+    }
+  };
+
+  const nextPuzzle = () => {
+    setSeed(Date.now() + Math.floor(Math.random() * 9999));
+  };
+
+  const togglePause = () => {
+    setIsPaused((p) => {
+      const next = !p;
+      if (next) {
+        clearInterval(timerRef.current);
       } else {
-        input.classList.remove("wrong");
+        // resume timer only if started
+        if (startedRef.current) setSeconds((s) => s);
       }
-    }
+      return next;
+    });
+  };
 
-    function giveHint() {
-      if (hintsLeft <= 0) return;
+  const onDefaultNumberClick = (val) => {
+    if (highlightValue === val) setHighlightValue(null);
+    else setHighlightValue(val);
+  };
 
-      // Find an empty cell
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          const index = r * 9 + c;
-          const cell = boardElement.children[index];
-          if (!cell.classList.contains("fixed") && cell.value === "") {
-            const correct = solutionBoard[r][c];
-            cell.value = correct;
-            cell.classList.add("fixed");
-            cell.disabled = true;
-            hintsLeft--;
-            document.getElementById("hintBtn").innerText = `Hint (${hintsLeft})`;
-            if (hintsLeft === 0) {
-              document.getElementById("hintBtn").disabled = true;
-            }
-            return;
-          }
-        }
-      }
-    }
+  // keyboard numbers 1..9
+  const keyboard = useMemo(() => [1,2,3,4,5,6,7,8,9], []);
 
-    function loadNewPuzzle() {
-      const empty = createEmptyBoard();
-      const full = generateFullBoard(empty);
-      const puzzle = makePuzzle(full);
+  const isCompleted = useMemo(() => {
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (board[r][c] === 0) return false;
+    return true;
+  }, [board]);
 
-      originalBoard = puzzle;
-      solutionBoard = full;
-      hintsLeft = 3;
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center p-6">
+      <div className="max-w-3xl w-full">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-semibold">Minimalistic Sudoku</h1>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-gray-600">Time: <span className="font-medium">{formatTime(seconds)}</span></div>
+            <div className="text-sm text-gray-600">Best: <span className="font-medium">{bestTime === null ? "--:--" : formatTime(bestTime)}</span></div>
+            <button className="px-3 py-1 bg-white border rounded shadow-sm text-sm" onClick={togglePause}>{isPaused ? "Resume" : "Pause"}</button>
+            <button className="px-3 py-1 bg-white border rounded shadow-sm text-sm" onClick={nextPuzzle}>Next</button>
+          </div>
+        </div>
 
-      document.getElementById("hintBtn").innerText = `Hint (3)`;
-      document.getElementById("hintBtn").disabled = false;
+        <div className="bg-white rounded-2xl p-6 shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="col-span-2">
+              <div className="grid grid-cols-9 gap-0 select-none">
+                {range(9).map((r) => (
+                  <React.Fragment key={r}>
+                    {range(9).map((c) => {
+                      const val = board[r][c];
+                      const isGiven = initial[r][c] !== 0;
+                      const isSelected = selected[0] === r && selected[1] === c;
+                      const wrong = showWrong && val !== 0 && val !== solution[r][c];
+                      const highlight = highlightValue !== null && isGiven && initial[r][c] === highlightValue;
+                      const cellBorder = `border-gray-300`;
+                      const thickTop = r % 3 === 0 ? "border-t-2" : "";
+                      const thickLeft = c % 3 === 0 ? "border-l-2" : "";
+                      const thickRight = c === 8 ? "border-r-2" : "";
+                      const thickBottom = r === 8 ? "border-b-2" : "";
+                      return (
+                        <div
+                          key={`${r}-${c}`}
+                          onClick={() => {
+                            selectCell(r, c);
+                            if (isGiven) onDefaultNumberClick(initial[r][c]);
+                            else setHighlightValue(null);
+                          }}
+                          className={`w-12 h-12 md:w-14 md:h-14 flex items-center justify-center text-lg font-medium ${isGiven ? 'text-gray-800' : 'text-gray-700'} ${isGiven ? 'bg-transparent' : 'bg-white'} ${isSelected ? 'ring-2 ring-indigo-300 rounded-md' : ''} ${wrong ? 'bg-red-100' : ''} ${highlight ? 'bg-indigo-100' : ''} border ${cellBorder} ${thickTop} ${thickLeft} ${thickRight} ${thickBottom} cursor-pointer`}
+                        >
+                          {val === 0 ? '' : val}
+                        </div>
+                      );
+                    })}
+                  </React.Fragment>
+                ))}
+              </div>
 
-      renderBoard(puzzle);
-    }
+              <div className="mt-4 flex items-center gap-3">
+                <div className="grid grid-cols-9 gap-2">
+                  {keyboard.map((n) => (
+                    <button key={n} onClick={() => onNumberPress(n)} className="w-10 h-10 md:w-12 md:h-12 rounded bg-white border shadow-sm flex items-center justify-center text-lg">
+                      {n}
+                    </button>
+                  ))}
+                  <button onClick={onBackspace} className="col-span-3 w-full rounded bg-white border shadow-sm py-2">Backspace</button>
+                </div>
+              </div>
+            </div>
 
-    // Load puzzle on start
-    loadNewPuzzle();
-  </script>
-</body>
-</html>
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="text-sm text-gray-600">Hints left: <span className="font-medium">{hintsLeft}</span></div>
+                <div className="text-sm text-gray-600">Clues: <span className="font-medium">{clues}</span></div>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="mb-3">
+                  <button onClick={useHint} disabled={hintsLeft <= 0} className="w-full px-3 py-2 rounded bg-white border">Use Hint</button>
+                </div>
+                <div className="mb-3">
+                  <button onClick={() => { setShowWrong(false); setBoard(copyBoard(initial)); }} className="w-full px-3 py-2 rounded bg-white border">Reset to Start</button>
+                </div>
+                <div className="mb-3">
+                  <button onClick={submit} className="w-full px-3 py-2 rounded bg-indigo-600 text-white">Submit</button>
+                </div>
+
+                <div className="text-sm text-gray-600">
+                  <div className="mb-2">Controls</div>
+                  <ul className="list-disc list-inside text-xs text-gray-500">
+                    <li>Select a cell then press numbers below to fill.</li>
+                    <li>Click a default (given) number to highlight all same given numbers.</li>
+                    <li>Backspace clears selected cell.
+                    </li>
+                    <li>Hints insert the correct number for selected cell (3 per puzzle).</li>
+                    <li>Submit will show wrong moves. Correct solution saves best time.</li>
+                  </ul>
+                </div>
+
+                <div className="mt-4 text-xs text-gray-500">{isPaused ? 'Paused' : isCompleted ? 'Board full — press Submit' : 'Playing...'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 text-xs text-gray-500">Note: This single-file demo uses a backtracking generator/solver. For production use you may want a stronger uniqueness checker if you need guaranteed single-solution puzzles.</div>
+      </div>
+    </div>
+  );
+}
