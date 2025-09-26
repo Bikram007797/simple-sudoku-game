@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 2em;
+            color: #4a5568;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: #f7fafc;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #718096;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            background: #2d3748;
+            border: 3px solid #2d3748;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .cell:hover {
+            background: #edf2f7;
+        }
+
+        .cell.selected {
+            background: #e6fffa !important;
+            border: 2px solid #38b2ac;
+        }
+
+        .cell.given {
+            background: #f7fafc;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+        .cell.user-input {
+            color: #667eea;
+        }
+
+        .cell.highlighted {
+            background: #fef5e7 !important;
+            color: #d69e2e;
+        }
+
+        .cell.error {
+            background: #fed7d7 !important;
+            color: #e53e3e;
+        }
+
+        /* 3x3 box borders */
+        .cell:nth-child(3n) {
+            border-right: 2px solid #2d3748;
+        }
+        
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid #2d3748;
+        }
+
+        .number-pad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .number-btn {
+            aspect-ratio: 1;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #4a5568;
+        }
+
+        .number-btn:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .number-btn.backspace {
+            background: #fed7d7;
+            color: #e53e3e;
+            font-size: 0.9em;
+        }
+
+        .number-btn.backspace:hover {
+            background: #fbb6ce;
+        }
+
+        .game-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .pause-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .pause-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .complete-message {
+            text-align: center;
+            padding: 20px;
+            background: #c6f6d5;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .animate-correct {
+            animation: pulse 0.3s ease-in-out;
+            background: #c6f6d5 !important;
+        }
+
+        .animate-wrong {
+            animation: pulse 0.3s ease-in-out;
+            background: #fed7d7 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1 class="title">Sudoku</h1>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">Time</div>
+                    <div class="stat-value" id="timer">00:00</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Best Time</div>
+                    <div class="stat-value" id="bestTime">--:--</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Hints</div>
+                    <div class="stat-value" id="hintsLeft">3</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="pauseBtn">Pause</button>
+            <button class="btn" id="hintBtn">Hint</button>
+            <button class="btn" id="nextBtn">Next</button>
+        </div>
+
+        <div class="complete-message" id="completeMessage">
+            <h3>Congratulations! 🎉</h3>
+            <p id="completionStats"></p>
+        </div>
+
+        <div class="sudoku-grid" id="sudokuGrid"></div>
+
+        <div class="number-pad">
+            <button class="number-btn" data-number="1">1</button>
+            <button class="number-btn" data-number="2">2</button>
+            <button class="number-btn" data-number="3">3</button>
+            <button class="number-btn" data-number="4">4</button>
+            <button class="number-btn" data-number="5">5</button>
+            <button class="number-btn" data-number="6">6</button>
+            <button class="number-btn" data-number="7">7</button>
+            <button class="number-btn" data-number="8">8</button>
+            <button class="number-btn" data-number="9">9</button>
+            <button class="number-btn backspace" data-number="backspace">⌫</button>
+        </div>
+
+        <div class="game-actions">
+            <button class="btn" id="checkBtn">Check Solution</button>
+            <button class="btn" id="newGameBtn">New Game</button>
+        </div>
+    </div>
+
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-content">
+            <h2>Game Paused</h2>
+            <p style="margin: 15px 0;">Take your time!</p>
+            <button class="btn" id="resumeBtn">Resume</button>
+        </div>
+    </div>
+
+    <script>
+        class SudokuGame {
+            constructor() {
+                this.grid = Array(9).fill().map(() => Array(9).fill(0));
+                this.solution = Array(9).fill().map(() => Array(9).fill(0));
+                this.initialGrid = Array(9).fill().map(() => Array(9).fill(0));
+                this.selectedCell = null;
+                this.hintsUsed = 0;
+                this.maxHints = 3;
+                this.startTime = null;
+                this.elapsedTime = 0;
+                this.timerInterval = null;
+                this.isPaused = false;
+                this.bestTime = this.loadBestTime();
+                this.soundEnabled = true;
+                
+                this.initializeGame();
+                this.bindEvents();
+                this.updateDisplay();
+            }
+
+            loadBestTime() {
+                const saved = localStorage.getItem('sudoku-best-time');
+                return saved ? parseInt(saved) : null;
+            }
+
+            saveBestTime(time) {
+                if (!this.bestTime || time < this.bestTime) {
+                    this.bestTime = time;
+                    localStorage.setItem('sudoku-best-time', time.toString());
+                    return true;
+                }
+                return false;
+            }
+
+            playSound(type) {
+                if (!this.soundEnabled) return;
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                if (type === 'correct') {
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+                } else if (type === 'wrong') {
+                    oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime + 0.1);
+                } else if (type === 'complete') {
+                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.4);
+                }
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
+
+            generateSudoku() {
+                // Generate a complete valid Sudoku solution
+                this.solution = Array(9).fill().map(() => Array(9).fill(0));
+                this.fillGrid(this.solution);
+                
+                // Create puzzle by removing numbers
+                this.grid = this.solution.map(row => [...row]);
+                this.initialGrid = this.solution.map(row => [...row]);
+                
+                // Remove numbers to create puzzle (keep 25-35 numbers)
+                const cellsToRemove = 81 - (25 + Math.floor(Math.random() * 11));
+                const positions = [];
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        positions.push([i, j]);
+                    }
+                }
+                
+                // Shuffle positions
+                for (let i = positions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [positions[i], positions[j]] = [positions[j], positions[i]];
+                }
+                
+                for (let i = 0; i < cellsToRemove; i++) {
+                    const [row, col] = positions[i];
+                    this.grid[row][col] = 0;
+                    this.initialGrid[row][col] = 0;
+                }
+            }
+
+            fillGrid(grid) {
+                const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+                
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (grid[row][col] === 0) {
+                            // Shuffle numbers
+                            for (let i = numbers.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+                            }
+                            
+                            for (let num of numbers) {
+                                if (this.isValidMove(grid, row, col, num)) {
+                                    grid[row][col] = num;
+                                    if (this.fillGrid(grid)) {
+                                        return true;
+                                    }
+                                    grid[row][col] = 0;
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            isValidMove(grid, row, col, num) {
+                // Check row
+                for (let c = 0; c < 9; c++) {
+                    if (grid[row][c] === num) return false;
+                }
+                
+                // Check column
+                for (let r = 0; r < 9; r++) {
+                    if (grid[r][col] === num) return false;
+                }
+                
+                // Check 3x3 box
+                const boxRow = Math.floor(row / 3) * 3;
+                const boxCol = Math.floor(col / 3) * 3;
+                for (let r = boxRow; r < boxRow + 3; r++) {
+                    for (let c = boxCol; c < boxCol + 3; c++) {
+                        if (grid[r][c] === num) return false;
+                    }
+                }
+                
+                return true;
+            }
+
+            initializeGame() {
+                this.generateSudoku();
+                this.hintsUsed = 0;
+                this.selectedCell = null;
+                this.startTimer();
+                this.renderGrid();
+            }
+
+            startTimer() {
+                this.startTime = Date.now();
+                this.elapsedTime = 0;
+                this.updateTimer();
+                this.timerInterval = setInterval(() => {
+                    if (!this.isPaused) {
+                        this.updateTimer();
+                    }
+                }, 1000);
+            }
+
+            updateTimer() {
+                if (!this.startTime || this.isPaused) return;
+                this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
+                const minutes = Math.floor(this.elapsedTime / 60);
+                const seconds = this.elapsedTime % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            pauseGame() {
+                this.isPaused = true;
+                document.getElementById('pauseOverlay').style.display = 'flex';
+                document.getElementById('pauseBtn').textContent = 'Resume';
+            }
+
+            resumeGame() {
+                this.isPaused = false;
+                document.getElementById('pauseOverlay').style.display = 'none';
+                document.getElementById('pauseBtn').textContent = 'Pause';
+                // Adjust start time to account for pause
+                this.startTime = Date.now() - (this.elapsedTime * 1000);
+            }
+
+            renderGrid() {
+                const grid = document.getElementById('sudokuGrid');
+                grid.innerHTML = '';
+                
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        
+                        const value = this.grid[row][col];
+                        if (value !== 0) {
+                            cell.textContent = value;
+                            if (this.initialGrid[row][col] !== 0) {
+                                cell.classList.add('given');
+                            } else {
+                                cell.classList.add('user-input');
+                            }
+                        }
+                        
+                        grid.appendChild(cell);
+                    }
+                }
+            }
+
+            selectCell(row, col) {
+                // Clear previous selection
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.classList.remove('selected', 'highlighted');
+                });
+                
+                this.selectedCell = { row, col };
+                const selectedElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                selectedElement.classList.add('selected');
+                
+                // Highlight same numbers
+                const value = this.grid[row][col];
+                if (value !== 0 && this.initialGrid[row][col] !== 0) {
+                    this.highlightSameNumbers(value);
+                }
+            }
+
+            highlightSameNumbers(number) {
+                document.querySelectorAll('.cell').forEach(cell => {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    if (this.grid[row][col] === number && this.initialGrid[row][col] !== 0) {
+                        cell.classList.add('highlighted');
+                    }
+                });
+            }
+
+            placeNumber(number) {
+                if (!this.selectedCell) return;
+                
+                const { row, col } = this.selectedCell;
+                
+                // Can't modify given numbers
+                if (this.initialGrid[row][col] !== 0) return;
+                
+                this.grid[row][col] = number;
+                this.renderGrid();
+                
+                // Re-select the cell
+                this.selectCell(row, col);
+                
+                // Check if game is complete
+                if (this.isComplete()) {
+                    this.completeGame();
+                }
+            }
+
+            deleteNumber() {
+                if (!this.selectedCell) return;
+                
+                const { row, col } = this.selectedCell;
+                
+                // Can't modify given numbers
+                if (this.initialGrid[row][col] !== 0) return;
+                
+                this.grid[row][col] = 0;
+                this.renderGrid();
+                this.selectCell(row, col);
+            }
+
+            useHint() {
+                if (this.hintsUsed >= this.maxHints || !this.selectedCell) return;
+                
+                const { row, col } = this.selectedCell;
+                
+                // Can't hint on given numbers
+                if (this.initialGrid[row][col] !== 0) return;
+                
+                // Place the correct number
+                this.grid[row][col] = this.solution[row][col];
+                this.hintsUsed++;
+                
+                this.renderGrid();
+                this.updateDisplay();
+                this.selectCell(row, col);
+                
+                // Animate correct placement
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                cell.classList.add('animate-correct');
+                setTimeout(() => cell.classList.remove('animate-correct'), 300);
+                
+                this.playSound('correct');
+                
+                if (this.isComplete()) {
+                    this.completeGame();
+                }
+            }
+
+            checkSolution() {
+                let hasErrors = false;
+                const errors = [];
+                
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (this.grid[row][col] !== 0 && this.grid[row][col] !== this.solution[row][col]) {
+                            errors.push({ row, col });
+                            hasErrors = true;
+                        }
+                    }
+                }
+                
+                // Clear previous error highlighting
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.classList.remove('error');
+                });
+                
+                if (hasErrors) {
+                    errors.forEach(({ row, col }) => {
+                        const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                        cell.classList.add('error');
+                    });
+                    this.playSound('wrong');
+                    alert(`Found ${errors.length} error(s)! Check the highlighted cells.`);
+                } else {
+                    this.playSound('correct');
+                    if (this.isComplete()) {
+                        this.completeGame();
+                    } else {
+                        alert('No errors found! Keep going!');
+                    }
+                }
+            }
+
+            isComplete() {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (this.grid[row][col] === 0) return false;
+                    }
+                }
+                return true;
+            }
+
+            completeGame() {
+                clearInterval(this.timerInterval);
+                this.playSound('complete');
+                
+                const isNewRecord = this.saveBestTime(this.elapsedTime);
+                const minutes = Math.floor(this.elapsedTime / 60);
+                const seconds = this.elapsedTime % 60;
+                const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                document.getElementById('completionStats').innerHTML = 
+                    `Time: ${timeStr}${isNewRecord ? ' 🏆 New Record!' : ''}<br>Hints used: ${this.hintsUsed}`;
+                document.getElementById('completeMessage').style.display = 'block';
+                
+                this.updateDisplay();
+            }
+
+            nextGame() {
+                document.getElementById('completeMessage').style.display = 'none';
+                clearInterval(this.timerInterval);
+                this.initializeGame();
+                this.updateDisplay();
+            }
+
+            updateDisplay() {
+                document.getElementById('hintsLeft').textContent = this.maxHints - this.hintsUsed;
+                document.getElementById('hintBtn').disabled = this.hintsUsed >= this.maxHints;
+                
+                const bestTimeElement = document.getElementById('bestTime');
+                if (this.bestTime) {
+                    const minutes = Math.floor(this.bestTime / 60);
+                    const seconds = this.bestTime % 60;
+                    bestTimeElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    bestTimeElement.textContent = '--:--';
+                }
+            }
+
+            bindEvents() {
+                // Grid clicks
+                document.getElementById('sudokuGrid').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('cell')) {
+                        const row = parseInt(e.target.dataset.row);
+                        const col = parseInt(e.target.dataset.col);
+                        this.selectCell(row, col);
+                    } else {
+                        // Clear selection when clicking empty space
+                        document.querySelectorAll('.cell').forEach(cell => {
+                            cell.classList.remove('selected', 'highlighted');
+                        });
+                        this.selectedCell = null;
+                    }
+                });
+
+                // Number pad
+                document.querySelectorAll('.number-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const number = btn.dataset.number;
+                        if (number === 'backspace') {
+                            this.deleteNumber();
+                        } else {
+                            this.placeNumber(parseInt(number));
+                        }
+                    });
+                });
+
+                // Control buttons
+                document.getElementById('hintBtn').addEventListener('click', () => this.useHint());
+                document.getElementById('nextBtn').addEventListener('click', () => this.nextGame());
+                document.getElementById('newGameBtn').addEventListener('click', () => this.nextGame());
+                document.getElementById('checkBtn').addEventListener('click', () => this.checkSolution());
+                
+                // Pause/Resume
+                document.getElementById('pauseBtn').addEventListener('click', () => {
+                    if (this.isPaused) {
+                        this.resumeGame();
+                    } else {
+                        this.pauseGame();
+                    }
+                });
+                
+                document.getElementById('resumeBtn').addEventListener('click', () => this.resumeGame());
+
+                // Keyboard support
+                document.addEventListener('keydown', (e) => {
+                    if (this.isPaused) return;
+                    
+                    if (e.key >= '1' && e.key <= '9') {
+                        this.placeNumber(parseInt(e.key));
+                    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                        e.preventDefault();
+                        this.deleteNumber();
+                    }
+                });
+            }
+        }
+
+        // Initialize game when page loads
+        window.addEventListener('load', () => {
+            new SudokuGame();
+        });
+    </script>
+</body>
+</html>
