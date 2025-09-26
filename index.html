@@ -1,388 +1,219 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-
-// Minimalistic Sudoku Game - Single-file React component
-// Usage: paste into a React project (Create React App / Vite). TailwindCSS classes are used for styling.
-// Default export at bottom.
-
-// --- Sudoku generator & solver (backtracking) ---
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
-function range(n) {
-  return [...Array(n).keys()];
-}
-
-function copyBoard(board) {
-  return board.map((r) => r.slice());
-}
-
-function isSafe(board, row, col, num) {
-  for (let x = 0; x < 9; x++) {
-    if (board[row][x] === num) return false;
-    if (board[x][col] === num) return false;
-  }
-  const startRow = row - (row % 3);
-  const startCol = col - (col % 3);
-  for (let r = 0; r < 3; r++)
-    for (let c = 0; c < 3; c++)
-      if (board[startRow + r][startCol + c] === num) return false;
-  return true;
-}
-
-function solveSudoku(board) {
-  for (let row = 0; row < 9; row++) {
-    for (let col = 0; col < 9; col++) {
-      if (board[row][col] === 0) {
-        for (let num = 1; num <= 9; num++) {
-          if (isSafe(board, row, col, num)) {
-            board[row][col] = num;
-            if (solveSudoku(board)) return true;
-            board[row][col] = 0;
-          }
-        }
-        return false;
-      }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Minimalistic Sudoku</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+      margin: 0; padding: 20px;
+      display: flex; justify-content: center;
     }
-  }
-  return true;
-}
-
-function generateFullBoard() {
-  const board = Array.from({ length: 9 }, () => Array(9).fill(0));
-  const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-  // Fill diagonal 3x3 boxes first for speed
-  for (let k = 0; k < 9; k += 3) {
-    const nums = shuffle(numbers.slice());
-    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) board[k + r][k + c] = nums[r * 3 + c];
-  }
-  // Solve the rest using backtracking (randomized)
-  function fillRemaining(r, c) {
-    if (c >= 9) {
-      c = 0;
-      r++;
-      if (r >= 9) return true;
+    .game-container {
+      max-width: 800px;
+      width: 100%;
     }
-    if (board[r][c] !== 0) return fillRemaining(r, c + 1);
-    const nums = shuffle(numbers.slice());
-    for (let num of nums) {
-      if (isSafe(board, r, c, num)) {
-        board[r][c] = num;
-        if (fillRemaining(r, c + 1)) return true;
-        board[r][c] = 0;
-      }
+    h1 { margin-bottom: 10px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .sudoku-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 40px);
+      grid-template-rows: repeat(9, 40px);
+      border: 2px solid #333;
+      margin: auto;
     }
-    return false;
-  }
-  fillRemaining(0, 0);
-  return board;
-}
-
-function removeCells(board, clues = 35) {
-  // Remove cells while ensuring a single solution is likely. We'll do a simple random removal until we have the desired clues.
-  const puzzle = copyBoard(board);
-  const cells = [];
-  for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push([r, c]);
-  shuffle(cells);
-  let removals = 81 - clues;
-  for (let i = 0; i < cells.length && removals > 0; i++) {
-    const [r, c] = cells[i];
-    const backup = puzzle[r][c];
-    puzzle[r][c] = 0;
-    // quick uniqueness-ish check: try solving; if solvable, keep removed (this doesn't strictly ensure single solution but good tradeoff for speed)
-    const attempt = copyBoard(puzzle);
-    if (solveSudoku(attempt)) {
-      removals--;
-    } else {
-      puzzle[r][c] = backup;
+    .cell {
+      border: 1px solid #ccc;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; cursor: pointer;
+      user-select: none;
     }
-  }
-  return puzzle;
-}
-
-function generatePuzzle(clues = 35) {
-  const full = generateFullBoard();
-  const solution = copyBoard(full);
-  const puzzle = removeCells(full, clues);
-  return { puzzle, solution };
-}
-
-// --- Simple audio feedback using WebAudio ---
-function useBeep() {
-  const ctxRef = useRef(null);
-  useEffect(() => {
-    ctxRef.current = null; // created on demand due to autoplay policies
-  }, []);
-  function beep(type = "correct") {
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!ctxRef.current) ctxRef.current = new AudioContext();
-      const ctx = ctxRef.current;
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g);
-      g.connect(ctx.destination);
-      o.type = type === "correct" ? "sine" : "triangle";
-      o.frequency.value = type === "correct" ? 880 : 200;
-      g.gain.value = 0.0001;
-      const now = ctx.currentTime;
-      g.gain.linearRampToValueAtTime(0.08, now + 0.01);
-      o.start(now);
-      o.stop(now + 0.12);
-    } catch (e) {
-      // ignore if AudioContext blocked
+    .cell.given { font-weight: bold; background: #f0f0f0; cursor: default; }
+    .cell.selected { outline: 2px solid #6366f1; }
+    .cell.wrong { background: #fecaca; }
+    .cell.highlight { background: #e0e7ff; }
+    .keyboard {
+      margin-top: 15px;
+      display: grid; grid-template-columns: repeat(9, 1fr);
+      gap: 5px;
     }
-  }
-  return beep;
-}
-
-// --- Helper to format time ---
-function formatTime(seconds) {
-  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
-  const ss = String(seconds % 60).padStart(2, "0");
-  return `${mm}:${ss}`;
-}
-
-// --- Main component ---
-export default function MinimalisticSudokuGame() {
-  const [seed, setSeed] = useState(() => Date.now());
-  const [clues, setClues] = useState(35); // can tweak for easier/harder
-  const [initial, setInitial] = useState(() => Array.from({ length: 9 }, () => Array(9).fill(0)));
-  const [solution, setSolution] = useState(() => Array.from({ length: 9 }, () => Array(9).fill(0)));
-  const [board, setBoard] = useState(() => Array.from({ length: 9 }, () => Array(9).fill(0)));
-  const [selected, setSelected] = useState([null, null]);
-  const [hintsLeft, setHintsLeft] = useState(3);
-  const [showWrong, setShowWrong] = useState(false);
-  const [highlightValue, setHighlightValue] = useState(null);
-  const [isPaused, setIsPaused] = useState(false);
-
-  const [seconds, setSeconds] = useState(0);
-  const timerRef = useRef(null);
-  const startedRef = useRef(false);
-  const bestKey = "sudoku_best_time";
-  const [bestTime, setBestTime] = useState(() => {
-    const v = localStorage.getItem(bestKey);
-    return v ? Number(v) : null;
-  });
-
-  const beep = useBeep();
-
-  // generate puzzle when seed or clues changes
-  useEffect(() => {
-    const { puzzle, solution } = generatePuzzle(clues);
-    setInitial(puzzle);
-    setSolution(solution);
-    setBoard(copyBoard(puzzle));
-    setHintsLeft(3);
-    setSeconds(0);
-    setShowWrong(false);
-    setSelected([null, null]);
-    setHighlightValue(null);
-    startedRef.current = false;
-    clearInterval(timerRef.current);
-  }, [seed, clues]);
-
-  // Timer
-  useEffect(() => {
-    if (isPaused) return;
-    if (!startedRef.current) return;
-    timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => clearInterval(timerRef.current);
-  }, [isPaused]);
-
-  useEffect(() => () => clearInterval(timerRef.current), []);
-
-  const selectCell = (r, c) => {
-    if (isPaused) return;
-    setSelected([r, c]);
-    if (!startedRef.current) {
-      startedRef.current = true;
-      setSeconds(0);
+    .keyboard button {
+      height: 40px; font-size: 16px;
+      border: 1px solid #ccc; background: white; cursor: pointer;
     }
-  };
-
-  const onNumberPress = (n) => {
-    const [r, c] = selected;
-    if (r === null || c === null) return;
-    if (initial[r][c] !== 0) return; // cannot change default
-    const newBoard = copyBoard(board);
-    newBoard[r][c] = n;
-    setBoard(newBoard);
-    setShowWrong(false);
-  };
-
-  const onBackspace = () => {
-    const [r, c] = selected;
-    if (r === null || c === null) return;
-    if (initial[r][c] !== 0) return;
-    const newBoard = copyBoard(board);
-    newBoard[r][c] = 0;
-    setBoard(newBoard);
-  };
-
-  const useHint = () => {
-    if (hintsLeft <= 0) return;
-    const [r, c] = selected;
-    if (r === null || c === null) return;
-    if (initial[r][c] !== 0) return;
-    const newBoard = copyBoard(board);
-    newBoard[r][c] = solution[r][c];
-    setBoard(newBoard);
-    setHintsLeft((h) => h - 1);
-  };
-
-  const submit = () => {
-    // check for wrongs
-    const wrongs = [];
-    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
-      if (board[r][c] !== 0 && board[r][c] !== solution[r][c]) wrongs.push([r, c]);
+    .keyboard button:hover { background: #f3f4f6; }
+    .backspace { grid-column: span 3; }
+    .side-panel {
+      margin-top: 15px;
     }
-    setShowWrong(true);
-    if (wrongs.length === 0) {
-      // solved - stop timer and store best time
-      clearInterval(timerRef.current);
-      startedRef.current = false;
-      beep("correct");
-      if (bestTime === null || seconds < bestTime) {
-        localStorage.setItem(bestKey, String(seconds));
-        setBestTime(seconds);
-      }
-    } else {
-      beep("wrong");
+    .side-panel button {
+      width: 100%; margin-bottom: 8px;
+      padding: 8px; cursor: pointer;
+      border: 1px solid #ccc; background: white;
     }
-  };
-
-  const nextPuzzle = () => {
-    setSeed(Date.now() + Math.floor(Math.random() * 9999));
-  };
-
-  const togglePause = () => {
-    setIsPaused((p) => {
-      const next = !p;
-      if (next) {
-        clearInterval(timerRef.current);
-      } else {
-        // resume timer only if started
-        if (startedRef.current) setSeconds((s) => s);
-      }
-      return next;
-    });
-  };
-
-  const onDefaultNumberClick = (val) => {
-    if (highlightValue === val) setHighlightValue(null);
-    else setHighlightValue(val);
-  };
-
-  // keyboard numbers 1..9
-  const keyboard = useMemo(() => [1,2,3,4,5,6,7,8,9], []);
-
-  const isCompleted = useMemo(() => {
-    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (board[r][c] === 0) return false;
-    return true;
-  }, [board]);
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-start justify-center p-6">
-      <div className="max-w-3xl w-full">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold">Minimalistic Sudoku</h1>
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-gray-600">Time: <span className="font-medium">{formatTime(seconds)}</span></div>
-            <div className="text-sm text-gray-600">Best: <span className="font-medium">{bestTime === null ? "--:--" : formatTime(bestTime)}</span></div>
-            <button className="px-3 py-1 bg-white border rounded shadow-sm text-sm" onClick={togglePause}>{isPaused ? "Resume" : "Pause"}</button>
-            <button className="px-3 py-1 bg-white border rounded shadow-sm text-sm" onClick={nextPuzzle}>Next</button>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="col-span-2">
-              <div className="grid grid-cols-9 gap-0 select-none">
-                {range(9).map((r) => (
-                  <React.Fragment key={r}>
-                    {range(9).map((c) => {
-                      const val = board[r][c];
-                      const isGiven = initial[r][c] !== 0;
-                      const isSelected = selected[0] === r && selected[1] === c;
-                      const wrong = showWrong && val !== 0 && val !== solution[r][c];
-                      const highlight = highlightValue !== null && isGiven && initial[r][c] === highlightValue;
-                      const cellBorder = `border-gray-300`;
-                      const thickTop = r % 3 === 0 ? "border-t-2" : "";
-                      const thickLeft = c % 3 === 0 ? "border-l-2" : "";
-                      const thickRight = c === 8 ? "border-r-2" : "";
-                      const thickBottom = r === 8 ? "border-b-2" : "";
-                      return (
-                        <div
-                          key={`${r}-${c}`}
-                          onClick={() => {
-                            selectCell(r, c);
-                            if (isGiven) onDefaultNumberClick(initial[r][c]);
-                            else setHighlightValue(null);
-                          }}
-                          className={`w-12 h-12 md:w-14 md:h-14 flex items-center justify-center text-lg font-medium ${isGiven ? 'text-gray-800' : 'text-gray-700'} ${isGiven ? 'bg-transparent' : 'bg-white'} ${isSelected ? 'ring-2 ring-indigo-300 rounded-md' : ''} ${wrong ? 'bg-red-100' : ''} ${highlight ? 'bg-indigo-100' : ''} border ${cellBorder} ${thickTop} ${thickLeft} ${thickRight} ${thickBottom} cursor-pointer`}
-                        >
-                          {val === 0 ? '' : val}
-                        </div>
-                      );
-                    })}
-                  </React.Fragment>
-                ))}
-              </div>
-
-              <div className="mt-4 flex items-center gap-3">
-                <div className="grid grid-cols-9 gap-2">
-                  {keyboard.map((n) => (
-                    <button key={n} onClick={() => onNumberPress(n)} className="w-10 h-10 md:w-12 md:h-12 rounded bg-white border shadow-sm flex items-center justify-center text-lg">
-                      {n}
-                    </button>
-                  ))}
-                  <button onClick={onBackspace} className="col-span-3 w-full rounded bg-white border shadow-sm py-2">Backspace</button>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <div className="text-sm text-gray-600">Hints left: <span className="font-medium">{hintsLeft}</span></div>
-                <div className="text-sm text-gray-600">Clues: <span className="font-medium">{clues}</span></div>
-              </div>
-
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="mb-3">
-                  <button onClick={useHint} disabled={hintsLeft <= 0} className="w-full px-3 py-2 rounded bg-white border">Use Hint</button>
-                </div>
-                <div className="mb-3">
-                  <button onClick={() => { setShowWrong(false); setBoard(copyBoard(initial)); }} className="w-full px-3 py-2 rounded bg-white border">Reset to Start</button>
-                </div>
-                <div className="mb-3">
-                  <button onClick={submit} className="w-full px-3 py-2 rounded bg-indigo-600 text-white">Submit</button>
-                </div>
-
-                <div className="text-sm text-gray-600">
-                  <div className="mb-2">Controls</div>
-                  <ul className="list-disc list-inside text-xs text-gray-500">
-                    <li>Select a cell then press numbers below to fill.</li>
-                    <li>Click a default (given) number to highlight all same given numbers.</li>
-                    <li>Backspace clears selected cell.
-                    </li>
-                    <li>Hints insert the correct number for selected cell (3 per puzzle).</li>
-                    <li>Submit will show wrong moves. Correct solution saves best time.</li>
-                  </ul>
-                </div>
-
-                <div className="mt-4 text-xs text-gray-500">{isPaused ? 'Paused' : isCompleted ? 'Board full — press Submit' : 'Playing...'}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 text-xs text-gray-500">Note: This single-file demo uses a backtracking generator/solver. For production use you may want a stronger uniqueness checker if you need guaranteed single-solution puzzles.</div>
+    .side-panel button:hover { background: #f3f4f6; }
+    .info { font-size: 14px; margin-top: 10px; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="top-bar">
+      <h1>Minimalistic Sudoku</h1>
+      <div>
+        ⏱ Time: <span id="time">00:00</span> |
+        🏆 Best: <span id="best">--:--</span>
+        <button id="pauseBtn">Pause</button>
+        <button id="nextBtn">Next</button>
       </div>
     </div>
-  );
-}
+
+    <div id="sudoku" class="sudoku-grid"></div>
+
+    <div class="keyboard" id="keyboard"></div>
+
+    <div class="side-panel">
+      <button id="hintBtn">Use Hint (3 left)</button>
+      <button id="resetBtn">Reset</button>
+      <button id="submitBtn" style="background:#6366f1;color:white;">Submit</button>
+      <div class="info" id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    // --- Utility ---
+    function formatTime(sec) {
+      const m = String(Math.floor(sec/60)).padStart(2,"0");
+      const s = String(sec%60).padStart(2,"0");
+      return m+":"+s;
+    }
+    function deepCopy(b){ return b.map(r=>r.slice()); }
+
+    // --- Sudoku generator (simple backtracking) ---
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+    function isSafe(board,r,c,n){
+      for(let i=0;i<9;i++){if(board[r][i]==n||board[i][c]==n)return false;}
+      const sr=r-r%3,sc=c-sc%3;
+      for(let i=0;i<3;i++)for(let j=0;j<3;j++)if(board[sr+i][sc+j]==n)return false;
+      return true;
+    }
+    function solve(board){
+      for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(board[r][c]==0){
+        for(let n=1;n<=9;n++){if(isSafe(board,r,c,n)){board[r][c]=n;if(solve(board))return true;board[r][c]=0;}}
+        return false;
+      }
+      return true;
+    }
+    function genFull(){
+      const b=Array.from({length:9},()=>Array(9).fill(0));
+      solve(b); // backtrack fill
+      return b;
+    }
+    function genPuzzle(clues=35){
+      const full=genFull();
+      const sol=deepCopy(full);
+      const puzzle=deepCopy(full);
+      let cells=[...Array(81).keys()].map(i=>[Math.floor(i/9),i%9]);
+      shuffle(cells);
+      let remove=81-clues;
+      for(let [r,c] of cells){
+        if(remove<=0)break;
+        const tmp=puzzle[r][c]; puzzle[r][c]=0;
+        const copy=deepCopy(puzzle);
+        if(solve(copy)) remove--; else puzzle[r][c]=tmp;
+      }
+      return {puzzle,solution:sol};
+    }
+
+    // --- Game state ---
+    let initial,solution,board;
+    let selected=null;
+    let hints=3;
+    let timer=0, interval=null, paused=false;
+    let best=localStorage.getItem("sudoku_best")||null;
+
+    const grid=document.getElementById("sudoku");
+    const keyboard=document.getElementById("keyboard");
+    const timeEl=document.getElementById("time");
+    const bestEl=document.getElementById("best");
+    const hintBtn=document.getElementById("hintBtn");
+    const status=document.getElementById("status");
+
+    function startGame(){
+      const {puzzle,solution:sol}=genPuzzle(35);
+      initial=puzzle; solution=sol; board=deepCopy(puzzle);
+      hints=3; hintBtn.textContent="Use Hint (3 left)";
+      selected=null; paused=false; timer=0; clearInterval(interval);
+      interval=setInterval(()=>{if(!paused) {timer++; timeEl.textContent=formatTime(timer);} },1000);
+      render();
+      bestEl.textContent=best?formatTime(best):"--:--";
+      status.textContent="Playing...";
+    }
+
+    function render(){
+      grid.innerHTML=\"\";
+      for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+        const cell=document.createElement(\"div\");
+        cell.className=\"cell\"; 
+        const val=board[r][c];
+        if(initial[r][c]!==0){
+          cell.textContent=initial[r][c];
+          cell.classList.add(\"given\");
+          cell.onclick=()=>highlight(initial[r][c]);
+        } else {
+          cell.textContent=val||\"\"; 
+          cell.onclick=()=>{selected=[r,c]; render();};
+        }
+        if(selected&&selected[0]==r&&selected[1]==c) cell.classList.add(\"selected\");
+        grid.appendChild(cell);
+      }
+    }
+
+    function highlight(n){
+      [...grid.children].forEach((cell,i)=>{
+        const r=Math.floor(i/9),c=i%9;
+        cell.classList.remove(\"highlight\");
+        if(initial[r][c]===n) cell.classList.add(\"highlight\");
+      });
+    }
+
+    // Keyboard
+    for(let n=1;n<=9;n++){
+      const b=document.createElement(\"button\"); b.textContent=n;
+      b.onclick=()=>{if(selected){const [r,c]=selected;if(initial[r][c]===0){board[r][c]=n;render();}}};
+      keyboard.appendChild(b);
+    }
+    const back=document.createElement(\"button\");
+    back.textContent=\"Backspace\"; back.className=\"backspace\";
+    back.onclick=()=>{if(selected){const [r,c]=selected;if(initial[r][c]===0){board[r][c]=0;render();}}};
+    keyboard.appendChild(back);
+
+    // Buttons
+    document.getElementById(\"nextBtn\").onclick=startGame;
+    document.getElementById(\"pauseBtn\").onclick=()=>{
+      paused=!paused; 
+      document.getElementById(\"pauseBtn\").textContent=paused?\"Resume\":\"Pause\";
+    };
+    hintBtn.onclick=()=>{
+      if(hints>0 && selected){const [r,c]=selected;if(initial[r][c]==0){board[r][c]=solution[r][c];hints--;hintBtn.textContent=`Use Hint (${hints} left)`;render();}}
+    };
+    document.getElementById(\"resetBtn\").onclick=()=>{board=deepCopy(initial);render();};
+    document.getElementById(\"submitBtn\").onclick=()=>{
+      let wrongs=0;
+      for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+        if(board[r][c]!==0 && board[r][c]!==solution[r][c]) wrongs++;
+      }
+      if(wrongs===0){
+        clearInterval(interval);
+        status.textContent=\"✅ Solved!\";
+        if(!best||timer<best){best=timer;localStorage.setItem(\"sudoku_best\",best);bestEl.textContent=formatTime(best);}
+      } else {
+        status.textContent=\"❌ Wrong moves: \"+wrongs;
+      }
+    };
+
+    startGame();
+  </script>
+</body>
+</html>
