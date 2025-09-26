@@ -317,6 +317,7 @@
                 this.elapsedTime = 0;
                 this.timerInterval = null;
                 this.isPaused = false;
+                this.gameStarted = false;
                 this.bestTime = this.loadBestTime();
                 this.soundEnabled = true;
                 
@@ -454,19 +455,29 @@
                 this.generateSudoku();
                 this.hintsUsed = 0;
                 this.selectedCell = null;
-                this.startTimer();
+                this.gameStarted = false;
+                this.elapsedTime = 0;
+                this.startTime = null;
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+                document.getElementById('timer').textContent = '00:00';
                 this.renderGrid();
             }
 
             startTimer() {
-                this.startTime = Date.now();
-                this.elapsedTime = 0;
-                this.updateTimer();
-                this.timerInterval = setInterval(() => {
-                    if (!this.isPaused) {
-                        this.updateTimer();
-                    }
-                }, 1000);
+                if (!this.gameStarted) {
+                    this.gameStarted = true;
+                    this.startTime = Date.now();
+                    this.elapsedTime = 0;
+                    this.updateTimer();
+                    this.timerInterval = setInterval(() => {
+                        if (!this.isPaused) {
+                            this.updateTimer();
+                        }
+                    }, 1000);
+                }
             }
 
             updateTimer() {
@@ -553,6 +564,9 @@
                 // Can't modify given numbers
                 if (this.initialGrid[row][col] !== 0) return;
                 
+                // Start timer on first move
+                this.startTimer();
+                
                 this.grid[row][col] = number;
                 this.renderGrid();
                 
@@ -573,6 +587,9 @@
                 // Can't modify given numbers
                 if (this.initialGrid[row][col] !== 0) return;
                 
+                // Start timer on first move
+                this.startTimer();
+                
                 this.grid[row][col] = 0;
                 this.renderGrid();
                 this.selectCell(row, col);
@@ -585,6 +602,9 @@
                 
                 // Can't hint on given numbers
                 if (this.initialGrid[row][col] !== 0) return;
+                
+                // Start timer on first move
+                this.startTimer();
                 
                 // Place the correct number
                 this.grid[row][col] = this.solution[row][col];
