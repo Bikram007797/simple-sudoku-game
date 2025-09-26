@@ -76,10 +76,10 @@
         }
         
         /* Region borders for the irregular shapes */
-        .cell[data-region-border-top] { border-top: 3px solid var(--main-color) !important; }
-        .cell[data-region-border-bottom] { border-bottom: 3px solid var(--main-color) !important; }
-        .cell[data-region-border-left] { border-left: 3px solid var(--main-color) !important; }
-        .cell[data-region-border-right] { border-right: 3px solid var(--main-color) !important; }
+        .cell[data-border-top] { border-top: 3px solid var(--main-color) !important; }
+        .cell[data-border-bottom] { border-bottom: 3px solid var(--main-color) !important; }
+        .cell[data-border-left] { border-left: 3px solid var(--main-color) !important; }
+        .cell[data-border-right] { border-right: 3px solid var(--main-color) !important; }
 
         .control-panel {
             display: flex;
@@ -235,6 +235,14 @@
                 [[3,0], [4,0], [4,1], [4,2], [4,3]]
             ];
             
+            // Pre-calculate region memberships for faster lookup
+            const regionMap = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(-1));
+            REGIONS.forEach((region, index) => {
+                region.forEach(([r, c]) => {
+                    regionMap[r][c] = index;
+                });
+            });
+
             // --- CORE SUDOKU GENERATION ALGORITHM ---
             
             function isSafe(grid, row, col, num) {
@@ -247,22 +255,13 @@
                     if (grid[x][col] === num) return false;
                 }
                 // Check region
-                const regionIndex = getRegionIndex(row, col);
+                const regionIndex = regionMap[row][col];
                 for (let [r, c] of REGIONS[regionIndex]) {
                     if (grid[r][c] === num) return false;
                 }
                 return true;
             }
 
-            function getRegionIndex(row, col) {
-                for (let i = 0; i < REGIONS.length; i++) {
-                    for (let [r, c] of REGIONS[i]) {
-                        if (r === row && c === col) return i;
-                    }
-                }
-                return -1; // Should not happen
-            }
-            
             function solveSudoku(grid) {
                 for (let row = 0; row < GRID_SIZE; row++) {
                     for (let col = 0; col < GRID_SIZE; col++) {
@@ -319,22 +318,20 @@
                         cell.dataset.row = rowIndex;
                         cell.dataset.col = colIndex;
                         
-                        // Add border attributes based on region boundaries
-                        const regionIndex = getRegionIndex(rowIndex, colIndex);
-                        const isTopBoundary = REGIONS.some(region => region.some(([r,c]) => r === rowIndex-1 && c === colIndex) && !region.some(([r,c]) => r === rowIndex && c === colIndex) && region.includes([rowIndex, colIndex]));
-                        
-                        const isLeftBoundary = REGIONS.some(region => region.some(([r,c]) => r === rowIndex && c === colIndex-1) && !region.some(([r,c]) => r === rowIndex && c === colIndex) && region.includes([rowIndex, colIndex]));
-                        
-                        if (rowIndex > 0 && getRegionIndex(rowIndex - 1, colIndex) !== regionIndex) {
-                            cell.setAttribute('data-region-border-top', '');
+                        // Check for region boundaries
+                        const currentRegion = regionMap[rowIndex][colIndex];
+                        if (rowIndex > 0 && regionMap[rowIndex - 1][colIndex] !== currentRegion) {
+                            cell.setAttribute('data-border-top', '');
                         }
-                        if (colIndex > 0 && getRegionIndex(rowIndex, colIndex - 1) !== regionIndex) {
-                            cell.setAttribute('data-region-border-left', '');
+                        if (colIndex > 0 && regionMap[rowIndex][colIndex - 1] !== currentRegion) {
+                            cell.setAttribute('data-border-left', '');
                         }
-                        if (rowIndex === 0) cell.setAttribute('data-region-border-top', '');
-                        if (colIndex === 0) cell.setAttribute('data-region-border-left', '');
-                        if (rowIndex === GRID_SIZE - 1) cell.setAttribute('data-region-border-bottom', '');
-                        if (colIndex === GRID_SIZE - 1) cell.setAttribute('data-region-border-right', '');
+                        
+                        // Always add outer borders
+                        if (rowIndex === 0) cell.setAttribute('data-border-top', '');
+                        if (colIndex === 0) cell.setAttribute('data-border-left', '');
+                        if (rowIndex === GRID_SIZE - 1) cell.setAttribute('data-border-bottom', '');
+                        if (colIndex === GRID_SIZE - 1) cell.setAttribute('data-border-right', '');
                         
                         if (value !== 0) {
                             cell.textContent = value;
