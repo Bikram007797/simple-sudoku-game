@@ -1,0 +1,104 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const boardElement = document.getElementById('game-board');
+    const checkButton = document.getElementById('check-button');
+    const messageElement = document.getElementById('message');
+
+    // A simple, solved 3x3 puzzle (Sudoku rules: 1-3 in each row/column)
+    const SOLUTION = [
+        [1, 2, 3],
+        [3, 1, 2],
+        [2, 3, 1]
+    ];
+
+    // The puzzle with some numbers pre-filled (0 means empty/editable)
+    let PUZZLE_STATE = [
+        [1, 0, 3],
+        [0, 1, 0],
+        [2, 0, 1]
+    ];
+
+    function createBoard() {
+        boardElement.innerHTML = '';
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.setAttribute('data-row', r);
+                cell.setAttribute('data-col', c);
+
+                const value = PUZZLE_STATE[r][c];
+
+                if (value !== 0) {
+                    cell.textContent = value;
+                    cell.classList.add('fixed'); // Fixed numbers cannot be changed
+                } else {
+                    cell.textContent = '';
+                    cell.classList.add('editable');
+                    cell.setAttribute('contenteditable', 'true'); // Makes it clickable/editable
+                    cell.addEventListener('input', handleCellInput);
+                }
+
+                boardElement.appendChild(cell);
+            }
+        }
+    }
+
+    function handleCellInput(event) {
+        let cell = event.target;
+        let value = cell.textContent.trim();
+        let r = parseInt(cell.getAttribute('data-row'));
+        let c = parseInt(cell.getAttribute('data-col'));
+
+        // Basic validation: only accept '1', '2', or '3'
+        if (value.length > 1) {
+            value = value.slice(-1);
+        }
+
+        if (value && !['1', '2', '3'].includes(value)) {
+            cell.textContent = '';
+            PUZZLE_STATE[r][c] = 0;
+            return;
+        }
+
+        cell.textContent = value;
+        PUZZLE_STATE[r][c] = value ? parseInt(value) : 0;
+        messageElement.textContent = ''; // Clear message on new input
+    }
+
+    function checkSolution() {
+        let isCorrect = true;
+        
+        // Check if all cells are filled
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                if (PUZZLE_STATE[r][c] === 0) {
+                    messageElement.textContent = "Please fill all empty boxes before checking.";
+                    messageElement.className = 'incorrect';
+                    return;
+                }
+            }
+        }
+
+        // Check against the stored solution
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                if (PUZZLE_STATE[r][c] !== SOLUTION[r][c]) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+            if (!isCorrect) break;
+        }
+
+        if (isCorrect) {
+            messageElement.textContent = "🥳 Puzzle Solved! Great job!";
+            messageElement.className = 'correct';
+        } else {
+            messageElement.textContent = "❌ Incorrect. Keep trying!";
+            messageElement.className = 'incorrect';
+        }
+    }
+
+    checkButton.addEventListener('click', checkSolution);
+    createBoard();
+});
