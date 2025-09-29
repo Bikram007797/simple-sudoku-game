@@ -1464,27 +1464,24 @@
             }
 
             bindEvents() {
-                // Wait a bit to ensure all elements are loaded
-                setTimeout(() => {
+                // Use event delegation for better reliability
+                document.body.addEventListener('click', (e) => {
+                    const target = e.target;
+                    
                     // Enter button
-                    const enterBtn = document.getElementById('enterBtn');
-                    if (enterBtn) {
-                        enterBtn.addEventListener('click', () => {
-                            this.vibrate(15);
-                            this.playSound('click');
-                            document.getElementById('titleScreen').classList.add('fade-out');
-                            this.showTransition(() => {
-                                document.getElementById('titleScreen').style.display = 'none';
-                                document.getElementById('mainMenu').classList.add('active');
-                            });
+                    if (target.id === 'enterBtn') {
+                        this.vibrate(15);
+                        this.playSound('click');
+                        document.getElementById('titleScreen').classList.add('fade-out');
+                        this.showTransition(() => {
+                            document.getElementById('titleScreen').style.display = 'none';
+                            document.getElementById('mainMenu').classList.add('active');
                         });
                     }
-                }, 100);
-
-                // Menu buttons
-                const startGameBtn = document.getElementById('startGameBtn');
-                if (startGameBtn) {
-                    startGameBtn.addEventListener('click', () => {
+                    
+                    // Start Game button
+                    if (target.id === 'startGameBtn') {
+                        console.log('Start Game clicked');
                         this.vibrate(15);
                         this.playSound('click');
                         document.getElementById('mainMenu').classList.add('fade-out');
@@ -1493,97 +1490,101 @@
                             document.getElementById('gameScreen').classList.add('active');
                             this.initializeGame();
                         });
-                    });
-                }
-
-                const howToPlayBtn = document.getElementById('howToPlayBtn');
-                if (howToPlayBtn) {
-                    howToPlayBtn.addEventListener('click', () => {
+                    }
+                    
+                    // How to Play button
+                    if (target.id === 'howToPlayBtn') {
+                        console.log('How to Play clicked');
                         this.vibrate(10);
                         this.playSound('click');
                         document.getElementById('howToPlayScreen').classList.add('active');
-                    });
-                }
-
-                const statisticsBtn = document.getElementById('statisticsBtn');
-                if (statisticsBtn) {
-                    statisticsBtn.addEventListener('click', () => {
+                    }
+                    
+                    // Statistics button
+                    if (target.id === 'statisticsBtn') {
+                        console.log('Statistics clicked');
                         this.vibrate(10);
                         this.playSound('click');
                         this.updateStatisticsDisplay();
                         document.getElementById('statisticsScreen').classList.add('active');
-                    });
-                }
-
-                const aboutBtn = document.getElementById('aboutBtn');
-                if (aboutBtn) {
-                    aboutBtn.addEventListener('click', () => {
+                    }
+                    
+                    // About button
+                    if (target.id === 'aboutBtn') {
+                        console.log('About clicked');
                         this.vibrate(10);
                         this.playSound('click');
                         document.getElementById('aboutScreen').classList.add('active');
-                    });
-                }
-
-                // Close info screens
-                const closeHowToPlay = document.getElementById('closeHowToPlay');
-                if (closeHowToPlay) {
-                    closeHowToPlay.addEventListener('click', () => {
+                    }
+                    
+                    // Close info screens
+                    if (target.id === 'closeHowToPlay') {
                         this.vibrate(10);
                         this.playSound('click');
                         document.getElementById('howToPlayScreen').classList.remove('active');
-                    });
-                }
-
-                const closeStatistics = document.getElementById('closeStatistics');
-                if (closeStatistics) {
-                    closeStatistics.addEventListener('click', () => {
+                    }
+                    
+                    if (target.id === 'closeStatistics') {
                         this.vibrate(10);
                         this.playSound('click');
                         document.getElementById('statisticsScreen').classList.remove('active');
-                    });
-                }
-
-                const closeAbout = document.getElementById('closeAbout');
-                if (closeAbout) {
-                    closeAbout.addEventListener('click', () => {
+                    }
+                    
+                    if (target.id === 'closeAbout') {
                         this.vibrate(10);
                         this.playSound('click');
                         document.getElementById('aboutScreen').classList.remove('active');
-                    });
-                }
-
-                // Game controls
-                document.getElementById('pauseBtn').addEventListener('click', () => {
-                    if (this.isPaused) {
-                        this.resumeGame();
-                    } else {
-                        this.pauseGame();
                     }
                 });
 
-                document.getElementById('resumeBtn').addEventListener('click', () => {
-                    this.resumeGame();
-                });
-
-                document.getElementById('restartBtn').addEventListener('click', () => {
-                    this.restartGame();
-                });
-
-                document.getElementById('hintBtn').addEventListener('click', () => {
-                    this.useHint();
-                });
-
-                document.getElementById('mainMenuBtn').addEventListener('click', () => {
-                    this.vibrate(15);
-                    this.showModal('Return to Menu? 🏠', 'Your current progress will be lost.', true, () => {
-                        if (this.timerInterval) {
-                            clearInterval(this.timerInterval);
+                    // Pause button
+                    if (target.id === 'pauseBtn') {
+                        if (this.isPaused) {
+                            this.resumeGame();
+                        } else {
+                            this.pauseGame();
                         }
-                        document.getElementById('gameScreen').classList.remove('active');
-                        document.getElementById('mainMenu').classList.add('active');
-                    });
+                    }
+                    
+                    // Resume button
+                    if (target.id === 'resumeBtn') {
+                        this.resumeGame();
+                    }
+                    
+                    // Restart button
+                    if (target.id === 'restartBtn') {
+                        this.restartGame();
+                    }
+                    
+                    // Hint button
+                    if (target.id === 'hintBtn') {
+                        this.useHint();
+                    }
+                    
+                    // Main Menu button
+                    if (target.id === 'mainMenuBtn') {
+                        this.vibrate(15);
+                        this.showModal('Return to Menu? 🏠', 'Your current progress will be lost.', true, () => {
+                            if (this.timerInterval) {
+                                clearInterval(this.timerInterval);
+                            }
+                            document.getElementById('gameScreen').classList.remove('active');
+                            document.getElementById('mainMenu').classList.add('active');
+                        });
+                    }
+                    
+                    // Submit button
+                    if (target.id === 'submitBtn') {
+                        this.submitSolution();
+                    }
+                    
+                    // Next button
+                    if (target.id === 'nextBtn') {
+                        this.nextGame();
+                    }
                 });
 
+                
                 // Grid clicks
                 document.getElementById('sudokuGrid').addEventListener('click', (e) => {
                     if (e.target.classList.contains('cell')) {
@@ -1596,27 +1597,6 @@
                         });
                         this.selectedCell = null;
                     }
-                });
-
-                // Number pad
-                document.querySelectorAll('.number-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const number = btn.dataset.number;
-                        if (number === 'backspace') {
-                            this.deleteNumber();
-                        } else {
-                            this.placeNumber(parseInt(number));
-                        }
-                    });
-                });
-
-                // Action buttons
-                document.getElementById('submitBtn').addEventListener('click', () => {
-                    this.submitSolution();
-                });
-
-                document.getElementById('nextBtn').addEventListener('click', () => {
-                    this.nextGame();
                 });
 
                 // Keyboard support
