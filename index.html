@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sudoku Game</title>
+    <title>Zenku: The Path of Nine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&family=Zen+Maru+Gothic:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,85 +13,418 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Zen Maru Gothic', 'Noto Serif JP', sans-serif;
+            background: linear-gradient(135deg, #f5f1e8 0%, #e8dfd0 100%);
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 10px;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .zen-circle {
+            width: 120px;
+            height: 120px;
+            border: 4px solid #d4af37;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1.5s ease-in-out infinite;
+            margin-bottom: 30px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #d4af37;
+            font-size: 2em;
+            font-weight: 300;
+            letter-spacing: 3px;
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        /* Title Screen */
+        .title-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #8b7355 0%, #a0826d 50%, #8b7355 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .title-screen.active {
+            display: flex;
+        }
+
+        .title-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .game-title {
+            font-size: 4em;
+            color: #f5f1e8;
+            font-weight: 300;
+            letter-spacing: 8px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-family: 'Noto Serif JP', serif;
+            animation: fadeInDown 1s ease;
+        }
+
+        .game-subtitle {
+            font-size: 1.2em;
+            color: #d4af37;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 60px;
+            text-align: center;
+            max-width: 600px;
+            padding: 0 20px;
+            animation: fadeInUp 1s ease 0.3s both;
+        }
+
+        .enter-btn {
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+            color: #2c3e50;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.3em;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            animation: fadeInUp 1s ease 0.6s both;
+            font-family: 'Zen Maru Gothic', sans-serif;
+        }
+
+        .enter-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
+        }
+
+        .developer-credit {
+            position: absolute;
+            bottom: 40px;
+            color: #f5f1e8;
+            font-size: 0.9em;
+            opacity: 0.7;
+            animation: fadeIn 1s ease 1s both;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Transition Screen */
+        .transition-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+            transition: opacity 0.5s ease;
+        }
+
+        .transition-screen.active {
+            display: flex;
+        }
+
+        .transition-screen.fade-out {
+            opacity: 0;
+        }
+
+        .transition-text {
+            color: #d4af37;
+            font-size: 3em;
+            font-weight: 700;
+            letter-spacing: 5px;
+            font-family: 'Noto Serif JP', serif;
+            animation: pulse 1.5s ease infinite;
+        }
+
+        .transition-subtext {
+            color: #f5f1e8;
+            font-size: 1.2em;
+            margin-top: 20px;
+            opacity: 0.8;
+        }
+
+        /* Main Menu Screen */
+        .main-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f1e8 0%, #e8dfd0 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9997;
+            transition: opacity 0.5s ease;
+        }
+
+        .main-menu.active {
+            display: flex;
+        }
+
+        .main-menu.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-title {
+            font-size: 3em;
+            color: #5d4e37;
+            font-weight: 300;
+            letter-spacing: 6px;
+            margin-bottom: 60px;
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .menu-btn {
+            background: rgba(141, 115, 85, 0.1);
+            color: #5d4e37;
+            border: 2px solid #a0826d;
+            padding: 18px 60px;
+            font-size: 1.2em;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 400;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            min-width: 300px;
+        }
+
+        .menu-btn:hover {
+            background: rgba(141, 115, 85, 0.2);
+            transform: translateX(10px);
+            box-shadow: 0 5px 20px rgba(141, 115, 85, 0.3);
+        }
+
+        /* Info Screens (How to Play, Statistics, About) */
+        .info-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9996;
+            padding: 20px;
+        }
+
+        .info-screen.active {
+            display: flex;
+        }
+
+        .info-content {
+            background: linear-gradient(135deg, #f5f1e8 0%, #e8dfd0 100%);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-title {
+            font-size: 2em;
+            color: #5d4e37;
+            font-weight: 400;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            font-family: 'Noto Serif JP', serif;
+            text-align: center;
+        }
+
+        .info-text {
+            color: #5d4e37;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-size: 1em;
+        }
+
+        .close-btn {
+            background: linear-gradient(135deg, #a0826d 0%, #8d7355 100%);
+            color: #f5f1e8;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            transition: all 0.3s ease;
+            font-family: 'Zen Maru Gothic', sans-serif;
+        }
+
+        .close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(141, 115, 85, 0.3);
+        }
+
+        /* Game Screen */
+        .game-screen {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-screen.active {
+            display: flex;
         }
 
         .game-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
             width: 100%;
+            backdrop-filter: blur(10px);
         }
 
-        .header {
+        .game-header {
             text-align: center;
             margin-bottom: 20px;
         }
 
-        .title {
-            font-size: 2em;
-            color: #4a5568;
+        .game-name {
+            font-size: 2.5em;
+            color: #5d4e37;
             font-weight: 300;
-            margin-bottom: 10px;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            font-family: 'Noto Serif JP', serif;
         }
 
-        .stats {
+        .stats-bar {
             display: flex;
             justify-content: space-between;
-            background: #f7fafc;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            background: rgba(141, 115, 85, 0.1);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
         }
 
-        .stat {
+        .stat-item {
             text-align: center;
         }
 
         .stat-label {
             font-size: 0.8em;
-            color: #718096;
-            margin-bottom: 2px;
+            color: #8d7355;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
         }
 
         .stat-value {
-            font-size: 1.1em;
+            font-size: 1.2em;
             font-weight: 600;
-            color: #2d3748;
+            color: #5d4e37;
         }
 
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
+        .game-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
+        .control-btn {
+            background: rgba(141, 115, 85, 0.15);
+            color: #5d4e37;
+            border: 1px solid #a0826d;
+            padding: 10px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: 0.85em;
+            font-weight: 500;
             transition: all 0.3s ease;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            letter-spacing: 1px;
         }
 
-        .btn:hover {
+        .control-btn:hover {
+            background: rgba(141, 115, 85, 0.25);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
 
-        .btn:disabled {
-            opacity: 0.5;
+        .control-btn:disabled {
+            opacity: 0.4;
             cursor: not-allowed;
             transform: none;
         }
@@ -99,106 +433,191 @@
             display: grid;
             grid-template-columns: repeat(9, 1fr);
             gap: 1px;
-            background: #2d3748;
-            border: 3px solid #2d3748;
-            border-radius: 10px;
+            background: #8d7355;
+            border: 3px solid #8d7355;
+            border-radius: 15px;
             margin-bottom: 20px;
             overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         }
 
         .cell {
             aspect-ratio: 1;
-            background: white;
+            background: #faf8f5;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
-            font-weight: 600;
+            font-size: 1.3em;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
-            position: relative;
+            color: #5d4e37;
+            font-family: 'Zen Maru Gothic', sans-serif;
         }
 
         .cell:hover {
-            background: #edf2f7;
+            background: #f0ebe3;
         }
 
         .cell.selected {
-            background: #e6fffa !important;
-            border: 2px solid #38b2ac;
+            background: #d4c5b0 !important;
+            box-shadow: inset 0 0 0 2px #a0826d;
         }
 
         .cell.given {
-            background: #f7fafc;
-            color: #2d3748;
-            font-weight: 700;
+            background: #e8dfd0;
+            color: #3d2f1f;
+            font-weight: 600;
         }
 
         .cell.user-input {
-            color: #667eea;
+            color: #8d7355;
+            font-weight: 500;
         }
 
         .cell.highlighted {
-            background: #fef5e7 !important;
-            color: #d69e2e;
+            background: #f4e8d0 !important;
+            color: #a0826d;
         }
 
         .cell.error {
-            background: #fed7d7 !important;
-            color: #e53e3e;
+            background: #f4d7d7 !important;
+            color: #c44d4d;
+            animation: shake 0.3s ease;
         }
 
-        /* 3x3 box borders */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
         .cell:nth-child(3n) {
-            border-right: 2px solid #2d3748;
+            border-right: 2px solid #8d7355;
         }
         
         .cell:nth-child(n+19):nth-child(-n+27),
         .cell:nth-child(n+46):nth-child(-n+54) {
-            border-bottom: 2px solid #2d3748;
+            border-bottom: 2px solid #8d7355;
         }
 
         .number-pad {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            margin-bottom: 15px;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         .number-btn {
             aspect-ratio: 1;
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1.1em;
+            background: rgba(141, 115, 85, 0.1);
+            border: 2px solid #d4c5b0;
+            border-radius: 12px;
+            font-size: 1.3em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            color: #4a5568;
+            color: #5d4e37;
+            font-family: 'Zen Maru Gothic', sans-serif;
         }
 
         .number-btn:hover {
-            background: #f7fafc;
-            border-color: #cbd5e0;
+            background: rgba(141, 115, 85, 0.2);
+            transform: scale(1.05);
         }
 
         .number-btn.backspace {
-            background: #fed7d7;
-            color: #e53e3e;
-            font-size: 0.9em;
+            background: rgba(196, 77, 77, 0.1);
+            color: #c44d4d;
+            font-size: 1.1em;
+            border-color: #f4d7d7;
         }
 
         .number-btn.backspace:hover {
-            background: #fbb6ce;
+            background: rgba(196, 77, 77, 0.2);
         }
 
-        .game-actions {
+        .action-buttons {
             display: flex;
-            justify-content: space-between;
             gap: 10px;
         }
 
+        .action-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #a0826d 0%, #8d7355 100%);
+            color: #f5f1e8;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(141, 115, 85, 0.3);
+        }
+
+        /* Pause Overlay */
         .pause-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9995;
+        }
+
+        .pause-overlay.active {
+            display: flex;
+        }
+
+        .pause-content {
+            background: linear-gradient(135deg, #f5f1e8 0%, #e8dfd0 100%);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .pause-title {
+            font-size: 2.5em;
+            color: #5d4e37;
+            font-weight: 300;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .resume-btn {
+            background: linear-gradient(135deg, #a0826d 0%, #8d7355 100%);
+            color: #f5f1e8;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            letter-spacing: 2px;
+        }
+
+        .resume-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(141, 115, 85, 0.4);
+        }
+
+        /* Modal for messages */
+        .modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -208,104 +627,265 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 9994;
         }
 
-        .pause-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
+        .modal.active {
+            display: flex;
         }
 
-        .complete-message {
+        .modal-content {
+            background: linear-gradient(135deg, #f5f1e8 0%, #e8dfd0 100%);
+            padding: 40px;
+            border-radius: 20px;
             text-align: center;
-            padding: 20px;
-            background: #c6f6d5;
-            border-radius: 10px;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 2em;
+            color: #5d4e37;
             margin-bottom: 15px;
-            display: none;
+            font-family: 'Noto Serif JP', serif;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        .modal-message {
+            font-size: 1.1em;
+            color: #5d4e37;
+            margin-bottom: 25px;
+            line-height: 1.6;
         }
 
-        .animate-correct {
-            animation: pulse 0.3s ease-in-out;
-            background: #c6f6d5 !important;
+        .modal-btn {
+            background: linear-gradient(135deg, #a0826d 0%, #8d7355 100%);
+            color: #f5f1e8;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            margin: 5px;
         }
 
-        .animate-wrong {
-            animation: pulse 0.3s ease-in-out;
-            background: #fed7d7 !important;
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(141, 115, 85, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .game-title {
+                font-size: 2.5em;
+                letter-spacing: 4px;
+            }
+
+            .game-subtitle {
+                font-size: 0.9em;
+            }
+
+            .menu-title {
+                font-size: 2em;
+            }
+
+            .cell {
+                font-size: 1em;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <div class="header">
-            <h1 class="title">Sudoku</h1>
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-label">Time</div>
-                    <div class="stat-value" id="timer">00:00</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-label">Best Time</div>
-                    <div class="stat-value" id="bestTime">--:--</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-label">Hints</div>
-                    <div class="stat-value" id="hintsLeft">3</div>
-                </div>
-            </div>
-        </div>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="zen-circle"></div>
+        <div class="loading-text">Zenku: The Path of Nine</div>
+    </div>
 
-        <div class="controls">
-            <button class="btn" id="pauseBtn">Pause</button>
-            <button class="btn" id="hintBtn">Hint</button>
-            <button class="btn" id="nextBtn">Next</button>
-        </div>
+    <!-- Title Screen -->
+    <div class="title-screen" id="titleScreen">
+        <h1 class="game-title">Zenku: The Path of Nine</h1>
+        <p class="game-subtitle">A Peaceful 9 × 9 Sudoku for Mindful Play</p>
+        <button class="enter-btn" id="enterBtn">Enter ⛩️</button>
+        <div class="developer-credit">Developed by Bikram</div>
+    </div>
 
-        <div class="complete-message" id="completeMessage">
-            <h3>Congratulations! 🎉</h3>
-            <p id="completionStats"></p>
-        </div>
+    <!-- Transition Screen -->
+    <div class="transition-screen" id="transitionScreen">
+        <div class="transition-text" id="transitionText">Zenku</div>
+        <div class="transition-subtext" id="transitionSubtext">Developed by Bikram</div>
+    </div>
 
-        <div class="sudoku-grid" id="sudokuGrid"></div>
-
-        <div class="number-pad">
-            <button class="number-btn" data-number="1">1</button>
-            <button class="number-btn" data-number="2">2</button>
-            <button class="number-btn" data-number="3">3</button>
-            <button class="number-btn" data-number="4">4</button>
-            <button class="number-btn" data-number="5">5</button>
-            <button class="number-btn" data-number="6">6</button>
-            <button class="number-btn" data-number="7">7</button>
-            <button class="number-btn" data-number="8">8</button>
-            <button class="number-btn" data-number="9">9</button>
-            <button class="number-btn backspace" data-number="backspace">⌫</button>
-        </div>
-
-        <div class="game-actions">
-            <button class="btn" id="checkBtn">Check Solution</button>
-            <button class="btn" id="newGameBtn">New Game</button>
+    <!-- Main Menu -->
+    <div class="main-menu" id="mainMenu">
+        <h1 class="menu-title">Zenku</h1>
+        <div class="menu-options">
+            <button class="menu-btn" id="startGameBtn">🎯 Start Game</button>
+            <button class="menu-btn" id="howToPlayBtn">📖 How to Play</button>
+            <button class="menu-btn" id="statisticsBtn">📊 Statistics</button>
+            <button class="menu-btn" id="aboutBtn">ℹ️ About</button>
         </div>
     </div>
 
+    <!-- Info Screens -->
+    <div class="info-screen" id="howToPlayScreen">
+        <div class="info-content">
+            <h2 class="info-title">How to Play 📖</h2>
+            <div class="info-text">
+                <strong>Objective:</strong><br>
+                Fill the 9×9 grid so that each row, column, and 3×3 box contains the numbers 1-9 without repetition.<br><br>
+                
+                <strong>Rules:</strong><br>
+                • Each row must contain numbers 1-9<br>
+                • Each column must contain numbers 1-9<br>
+                • Each 3×3 box must contain numbers 1-9<br>
+                • No number can repeat in any row, column, or box<br><br>
+                
+                <strong>Controls:</strong><br>
+                • Tap a cell to select it<br>
+                • Use the number pad to fill cells<br>
+                • Use hints when you're stuck (3 per game)<br>
+                • Tap ⌫ to delete a number<br>
+                • Submit when you're done<br><br>
+                
+                <strong>Tips:</strong><br>
+                • Start with rows/columns that have many numbers<br>
+                • Look for numbers that can only go in one place<br>
+                • Take your time and breathe 🧘
+            </div>
+            <button class="close-btn" id="closeHowToPlay">Close</button>
+        </div>
+    </div>
+
+    <div class="info-screen" id="statisticsScreen">
+        <div class="info-content">
+            <h2 class="info-title">Statistics 📊</h2>
+            <div class="info-text">
+                <strong>Best Time:</strong><br>
+                <span id="statsBestTime">--:--</span><br><br>
+                
+                <strong>Average Time:</strong><br>
+                <span id="statsAvgTime">--:--</span><br><br>
+                
+                <strong>Games Completed:</strong><br>
+                <span id="statsGamesCompleted">0</span><br><br>
+                
+                <strong>Total Hints Used:</strong><br>
+                <span id="statsTotalHints">0</span>
+            </div>
+            <button class="close-btn" id="closeStatistics">Close</button>
+        </div>
+    </div>
+
+    <div class="info-screen" id="aboutScreen">
+        <div class="info-content">
+            <h2 class="info-title">About Zenku ⛩️</h2>
+            <div class="info-text">
+                <strong>What is Sudoku?</strong><br>
+                Sudoku is a logic-based number puzzle that originated in Japan. It challenges your mind and improves concentration, logic, and problem-solving skills.<br><br>
+                
+                <strong>Why Play Zenku?</strong><br>
+                Find your stillness in the grid.<br><br>
+                
+                Zenku (Zen + Sudoku) beautifully fuses the classic logical challenge of 9×9 Sudoku with the tranquil, minimalist beauty of Japanese Zen culture. This is not just a puzzle; it is a path to clarity.<br><br>
+                
+                Every element is designed to promote calm and composure. Immerse yourself in a peaceful aesthetic featuring muted, natural colours and soothing, ambient soundscapes. There are no harsh timers or jarring alerts—just the satisfying, quiet moment of true concentration.<br><br>
+                
+                Solve, meditate, and achieve Satori (sudden enlightenment) as you complete each grid. If you seek a focused retreat and an experience that is gentle on the eyes and good for the soul, Zenku is your sanctuary. 🧘‍♂️<br><br>
+                
+                <strong>Developer:</strong><br>
+                This game was lovingly developed by <strong>Bikram</strong> with the intention of bringing peace and mindfulness to your daily practice.
+            </div>
+            <button class="close-btn" id="closeAbout">Close</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="game-screen" id="gameScreen">
+        <div class="game-container">
+            <div class="game-header">
+                <h1 class="game-name">Zenku</h1>
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <div class="stat-label">Timer</div>
+                        <div class="stat-value" id="timer">00:00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Best Time</div>
+                        <div class="stat-value" id="bestTime">--:--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Hints</div>
+                        <div class="stat-value" id="hintsLeft">3</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button class="control-btn" id="pauseBtn">⏸️ Pause</button>
+                <button class="control-btn" id="restartBtn">🔄 Restart</button>
+                <button class="control-btn" id="hintBtn">💡 Hint</button>
+                <button class="control-btn" id="mainMenuBtn">🏠 Menu</button>
+            </div>
+
+            <div class="sudoku-grid" id="sudokuGrid"></div>
+
+            <div class="number-pad">
+                <button class="number-btn" data-number="1">1</button>
+                <button class="number-btn" data-number="2">2</button>
+                <button class="number-btn" data-number="3">3</button>
+                <button class="number-btn" data-number="4">4</button>
+                <button class="number-btn" data-number="5">5</button>
+                <button class="number-btn" data-number="6">6</button>
+                <button class="number-btn" data-number="7">7</button>
+                <button class="number-btn" data-number="8">8</button>
+                <button class="number-btn" data-number="9">9</button>
+                <button class="number-btn backspace" data-number="backspace">⌫</button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" id="submitBtn">✓ Submit</button>
+                <button class="action-btn" id="nextBtn">→ Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pause Overlay -->
     <div class="pause-overlay" id="pauseOverlay">
         <div class="pause-content">
-            <h2>Game Paused</h2>
-            <p style="margin: 15px 0;">Take your time!</p>
-            <button class="btn" id="resumeBtn">Resume</button>
+            <h2 class="pause-title">Paused 🧘</h2>
+            <p style="margin: 20px 0; color: #5d4e37;">Take a moment to breathe...</p>
+            <button class="resume-btn" id="resumeBtn">Resume</button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modalTitle">Message</h2>
+            <p class="modal-message" id="modalMessage">Message content</p>
+            <div id="modalButtons">
+                <button class="modal-btn" id="modalCloseBtn">OK</button>
+            </div>
         </div>
     </div>
 
     <script>
-        class SudokuGame {
+        class ZenkuGame {
             constructor() {
                 this.grid = Array(9).fill().map(() => Array(9).fill(0));
                 this.solution = Array(9).fill().map(() => Array(9).fill(0));
@@ -318,26 +898,60 @@
                 this.timerInterval = null;
                 this.isPaused = false;
                 this.gameStarted = false;
-                this.bestTime = this.loadBestTime();
                 this.soundEnabled = true;
                 
-                this.initializeGame();
+                // Statistics
+                this.stats = this.loadStats();
+                
+                this.initScreens();
                 this.bindEvents();
-                this.updateDisplay();
             }
 
-            loadBestTime() {
-                const saved = localStorage.getItem('sudoku-best-time');
-                return saved ? parseInt(saved) : null;
-            }
-
-            saveBestTime(time) {
-                if (!this.bestTime || time < this.bestTime) {
-                    this.bestTime = time;
-                    localStorage.setItem('sudoku-best-time', time.toString());
-                    return true;
+            loadStats() {
+                const saved = localStorage.getItem('zenku-stats');
+                if (saved) {
+                    return JSON.parse(saved);
                 }
-                return false;
+                return {
+                    bestTime: null,
+                    totalTime: 0,
+                    gamesCompleted: 0,
+                    totalHints: 0
+                };
+            }
+
+            saveStats() {
+                localStorage.setItem('zenku-stats', JSON.stringify(this.stats));
+            }
+
+            updateStatisticsDisplay() {
+                if (this.stats.bestTime) {
+                    const minutes = Math.floor(this.stats.bestTime / 60);
+                    const seconds = this.stats.bestTime % 60;
+                    document.getElementById('statsBestTime').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    document.getElementById('statsBestTime').textContent = '--:--';
+                }
+
+                if (this.stats.gamesCompleted > 0) {
+                    const avgTime = Math.floor(this.stats.totalTime / this.stats.gamesCompleted);
+                    const minutes = Math.floor(avgTime / 60);
+                    const seconds = avgTime % 60;
+                    document.getElementById('statsAvgTime').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    document.getElementById('statsAvgTime').textContent = '--:--';
+                }
+
+                document.getElementById('statsGamesCompleted').textContent = this.stats.gamesCompleted;
+                document.getElementById('statsTotalHints').textContent = this.stats.totalHints;
+            }
+
+            vibrate(pattern = 10) {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(pattern);
+                }
             }
 
             playSound(type) {
@@ -353,33 +967,66 @@
                 if (type === 'correct') {
                     oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
                     oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
                 } else if (type === 'wrong') {
                     oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime + 0.15);
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.4);
                 } else if (type === 'complete') {
                     oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
-                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.4);
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.15);
+                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.6);
+                } else if (type === 'click') {
+                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
                 }
+            }
+
+            initScreens() {
+                // Show loading screen for 3 seconds
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').classList.add('fade-out');
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        document.getElementById('titleScreen').classList.add('active');
+                    }, 500);
+                }, 3000);
+            }
+
+            showTransition(callback) {
+                const transitionScreen = document.getElementById('transitionScreen');
+                transitionScreen.classList.add('active');
                 
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
+                setTimeout(() => {
+                    transitionScreen.classList.add('fade-out');
+                    setTimeout(() => {
+                        transitionScreen.classList.remove('active', 'fade-out');
+                        if (callback) callback();
+                    }, 500);
+                }, 1500);
             }
 
             generateSudoku() {
-                // Generate a complete valid Sudoku solution
                 this.solution = Array(9).fill().map(() => Array(9).fill(0));
                 this.fillGrid(this.solution);
                 
-                // Create puzzle by removing numbers
                 this.grid = this.solution.map(row => [...row]);
                 this.initialGrid = this.solution.map(row => [...row]);
                 
-                // Remove numbers to create puzzle (keep 25-35 numbers)
-                const cellsToRemove = 81 - (25 + Math.floor(Math.random() * 11));
+                const cellsToRemove = 81 - (30 + Math.floor(Math.random() * 11));
                 const positions = [];
                 for (let i = 0; i < 9; i++) {
                     for (let j = 0; j < 9; j++) {
@@ -387,7 +1034,6 @@
                     }
                 }
                 
-                // Shuffle positions
                 for (let i = positions.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [positions[i], positions[j]] = [positions[j], positions[i]];
@@ -406,7 +1052,6 @@
                 for (let row = 0; row < 9; row++) {
                     for (let col = 0; col < 9; col++) {
                         if (grid[row][col] === 0) {
-                            // Shuffle numbers
                             for (let i = numbers.length - 1; i > 0; i--) {
                                 const j = Math.floor(Math.random() * (i + 1));
                                 [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
@@ -429,17 +1074,14 @@
             }
 
             isValidMove(grid, row, col, num) {
-                // Check row
                 for (let c = 0; c < 9; c++) {
                     if (grid[row][c] === num) return false;
                 }
                 
-                // Check column
                 for (let r = 0; r < 9; r++) {
                     if (grid[r][col] === num) return false;
                 }
                 
-                // Check 3x3 box
                 const boxRow = Math.floor(row / 3) * 3;
                 const boxCol = Math.floor(col / 3) * 3;
                 for (let r = boxRow; r < boxRow + 3; r++) {
@@ -458,12 +1100,14 @@
                 this.gameStarted = false;
                 this.elapsedTime = 0;
                 this.startTime = null;
+                this.isPaused = false;
                 if (this.timerInterval) {
                     clearInterval(this.timerInterval);
                     this.timerInterval = null;
                 }
                 document.getElementById('timer').textContent = '00:00';
                 this.renderGrid();
+                this.updateDisplay();
             }
 
             startTimer() {
@@ -491,16 +1135,36 @@
 
             pauseGame() {
                 this.isPaused = true;
-                document.getElementById('pauseOverlay').style.display = 'flex';
-                document.getElementById('pauseBtn').textContent = 'Resume';
+                document.getElementById('pauseOverlay').classList.add('active');
+                this.vibrate(10);
             }
 
             resumeGame() {
                 this.isPaused = false;
-                document.getElementById('pauseOverlay').style.display = 'none';
-                document.getElementById('pauseBtn').textContent = 'Pause';
-                // Adjust start time to account for pause
-                this.startTime = Date.now() - (this.elapsedTime * 1000);
+                document.getElementById('pauseOverlay').classList.remove('active');
+                if (this.startTime) {
+                    this.startTime = Date.now() - (this.elapsedTime * 1000);
+                }
+                this.vibrate(10);
+            }
+
+            restartGame() {
+                this.vibrate(15);
+                this.showModal('Restart Game? 🔄', 'Are you sure you want to restart? Your progress will be lost.', true, () => {
+                    this.grid = this.initialGrid.map(row => [...row]);
+                    this.hintsUsed = 0;
+                    this.gameStarted = false;
+                    this.elapsedTime = 0;
+                    this.startTime = null;
+                    if (this.timerInterval) {
+                        clearInterval(this.timerInterval);
+                        this.timerInterval = null;
+                    }
+                    document.getElementById('timer').textContent = '00:00';
+                    this.selectedCell = null;
+                    this.renderGrid();
+                    this.updateDisplay();
+                });
             }
 
             renderGrid() {
@@ -530,7 +1194,6 @@
             }
 
             selectCell(row, col) {
-                // Clear previous selection
                 document.querySelectorAll('.cell').forEach(cell => {
                     cell.classList.remove('selected', 'highlighted');
                 });
@@ -539,18 +1202,20 @@
                 const selectedElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
                 selectedElement.classList.add('selected');
                 
-                // Highlight same numbers
                 const value = this.grid[row][col];
-                if (value !== 0 && this.initialGrid[row][col] !== 0) {
+                if (value !== 0) {
                     this.highlightSameNumbers(value);
                 }
+                
+                this.vibrate(5);
+                this.playSound('click');
             }
 
             highlightSameNumbers(number) {
                 document.querySelectorAll('.cell').forEach(cell => {
                     const row = parseInt(cell.dataset.row);
                     const col = parseInt(cell.dataset.col);
-                    if (this.grid[row][col] === number && this.initialGrid[row][col] !== 0) {
+                    if (this.grid[row][col] === number) {
                         cell.classList.add('highlighted');
                     }
                 });
@@ -561,22 +1226,15 @@
                 
                 const { row, col } = this.selectedCell;
                 
-                // Can't modify given numbers
                 if (this.initialGrid[row][col] !== 0) return;
                 
-                // Start timer on first move
                 this.startTimer();
                 
                 this.grid[row][col] = number;
                 this.renderGrid();
-                
-                // Re-select the cell
                 this.selectCell(row, col);
-                
-                // Check if game is complete
-                if (this.isComplete()) {
-                    this.completeGame();
-                }
+                this.vibrate(10);
+                this.playSound('click');
             }
 
             deleteNumber() {
@@ -584,57 +1242,82 @@
                 
                 const { row, col } = this.selectedCell;
                 
-                // Can't modify given numbers
                 if (this.initialGrid[row][col] !== 0) return;
                 
-                // Start timer on first move
                 this.startTimer();
                 
                 this.grid[row][col] = 0;
                 this.renderGrid();
                 this.selectCell(row, col);
+                this.vibrate(10);
+                this.playSound('click');
             }
 
             useHint() {
-                if (this.hintsUsed >= this.maxHints || !this.selectedCell) return;
+                if (this.hintsUsed >= this.maxHints) {
+                    this.showModal('No Hints Left 💡', 'You have used all 3 hints for this puzzle. Keep trying! 💪');
+                    this.vibrate(20);
+                    return;
+                }
+                
+                if (!this.selectedCell) {
+                    this.showModal('Select a Cell 👆', 'Please select an empty cell to get a hint.');
+                    this.vibrate(20);
+                    return;
+                }
                 
                 const { row, col } = this.selectedCell;
                 
-                // Can't hint on given numbers
-                if (this.initialGrid[row][col] !== 0) return;
+                if (this.initialGrid[row][col] !== 0) {
+                    this.showModal('Already Given 🎯', 'This number was provided at the start. Try selecting an empty cell.');
+                    this.vibrate(20);
+                    return;
+                }
+
+                if (this.grid[row][col] !== 0) {
+                    this.showModal('Cell Filled ✏️', 'This cell already has a number. Try selecting an empty cell.');
+                    this.vibrate(20);
+                    return;
+                }
                 
-                // Start timer on first move
                 this.startTimer();
                 
-                // Place the correct number
                 this.grid[row][col] = this.solution[row][col];
                 this.hintsUsed++;
+                this.stats.totalHints++;
+                this.saveStats();
                 
                 this.renderGrid();
                 this.updateDisplay();
                 this.selectCell(row, col);
                 
-                // Animate correct placement
                 const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                cell.classList.add('animate-correct');
-                setTimeout(() => cell.classList.remove('animate-correct'), 300);
+                cell.style.animation = 'none';
+                setTimeout(() => {
+                    cell.style.animation = 'pulse 0.3s ease-in-out';
+                }, 10);
                 
                 this.playSound('correct');
-                
-                if (this.isComplete()) {
-                    this.completeGame();
-                }
+                this.vibrate(15);
             }
 
-            checkSolution() {
-                let hasErrors = false;
+            submitSolution() {
+                this.vibrate(15);
+                
+                // Count filled cells
+                let filledCount = 0;
+                let correctCount = 0;
                 const errors = [];
                 
                 for (let row = 0; row < 9; row++) {
                     for (let col = 0; col < 9; col++) {
-                        if (this.grid[row][col] !== 0 && this.grid[row][col] !== this.solution[row][col]) {
-                            errors.push({ row, col });
-                            hasErrors = true;
+                        if (this.grid[row][col] !== 0) {
+                            filledCount++;
+                            if (this.grid[row][col] === this.solution[row][col]) {
+                                correctCount++;
+                            } else {
+                                errors.push({ row, col });
+                            }
                         }
                     }
                 }
@@ -644,70 +1327,263 @@
                     cell.classList.remove('error');
                 });
                 
-                if (hasErrors) {
-                    errors.forEach(({ row, col }) => {
-                        const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                        cell.classList.add('error');
-                    });
+                // Case 1: No cells filled
+                if (filledCount === 0) {
+                    this.showModal('Not Started Yet 😅', 'You haven\'t filled a single cell yet! Take your time and begin your journey. 🧘‍♂️');
                     this.playSound('wrong');
-                    alert(`Found ${errors.length} error(s)! Check the highlighted cells.`);
-                } else {
-                    this.playSound('correct');
-                    if (this.isComplete()) {
-                        this.completeGame();
+                    return;
+                }
+                
+                // Case 2 & 4: Some/all cells filled, all correct
+                if (errors.length === 0) {
+                    if (filledCount < 81) {
+                        // Case 2: Partial but all correct
+                        this.showModal('Getting Better! 🌱', 'Keep going! All your entries are correct so far. You\'re on the right path. 💚');
+                        this.playSound('correct');
                     } else {
-                        alert('No errors found! Keep going!');
+                        // Case 4: Complete and all correct!
+                        this.completeGame();
                     }
+                    return;
                 }
-            }
-
-            isComplete() {
-                for (let row = 0; row < 9; row++) {
-                    for (let col = 0; col < 9; col++) {
-                        if (this.grid[row][col] === 0) return false;
-                    }
-                }
-                return true;
+                
+                // Case 3 & 5: Some/all wrong
+                errors.forEach(({ row, col }) => {
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.classList.add('error');
+                });
+                
+                this.playSound('wrong');
+                this.vibrate([20, 100, 20]);
+                
+                const errorText = errors.length === 1 ? '1 mistake' : `${errors.length} mistakes`;
+                this.showModal('Oops, Mistakes Found 😔', `You made ${errorText}. The incorrect cells are highlighted. Take a deep breath and try again. 🍃`);
             }
 
             completeGame() {
                 clearInterval(this.timerInterval);
                 this.playSound('complete');
+                this.vibrate([50, 100, 50, 100, 50]);
                 
-                const isNewRecord = this.saveBestTime(this.elapsedTime);
+                // Update statistics
+                this.stats.gamesCompleted++;
+                this.stats.totalTime += this.elapsedTime;
+                
+                const isNewRecord = !this.stats.bestTime || this.elapsedTime < this.stats.bestTime;
+                if (isNewRecord) {
+                    this.stats.bestTime = this.elapsedTime;
+                }
+                
+                this.saveStats();
+                
                 const minutes = Math.floor(this.elapsedTime / 60);
                 const seconds = this.elapsedTime % 60;
                 const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 
-                document.getElementById('completionStats').innerHTML = 
-                    `Time: ${timeStr}${isNewRecord ? ' 🏆 New Record!' : ''}<br>Hints used: ${this.hintsUsed}`;
-                document.getElementById('completeMessage').style.display = 'block';
+                let message = `🎉 Time: ${timeStr}`;
+                if (isNewRecord) {
+                    message += '<br>🏆 New Best Time!';
+                }
+                message += `<br>💡 Hints used: ${this.hintsUsed}/3`;
+                message += '<br><br>You have achieved Satori! ✨';
                 
+                this.showModal('Congratulations! 🎊', message, false, null, true);
                 this.updateDisplay();
             }
 
             nextGame() {
-                document.getElementById('completeMessage').style.display = 'none';
-                clearInterval(this.timerInterval);
-                this.initializeGame();
-                this.updateDisplay();
+                this.vibrate(15);
+                this.showTransition(() => {
+                    this.initializeGame();
+                });
             }
 
             updateDisplay() {
-                document.getElementById('hintsLeft').textContent = this.maxHints - this.hintsUsed;
+                document.getElementById('hintsLeft').textContent = `${this.maxHints - this.hintsUsed}`;
                 document.getElementById('hintBtn').disabled = this.hintsUsed >= this.maxHints;
                 
-                const bestTimeElement = document.getElementById('bestTime');
-                if (this.bestTime) {
-                    const minutes = Math.floor(this.bestTime / 60);
-                    const seconds = this.bestTime % 60;
-                    bestTimeElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                if (this.stats.bestTime) {
+                    const minutes = Math.floor(this.stats.bestTime / 60);
+                    const seconds = this.stats.bestTime % 60;
+                    document.getElementById('bestTime').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 } else {
-                    bestTimeElement.textContent = '--:--';
+                    document.getElementById('bestTime').textContent = '--:--';
                 }
             }
 
+            showModal(title, message, showCancel = false, onConfirm = null, showNextButton = false) {
+                const modal = document.getElementById('modal');
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalMessage').innerHTML = message;
+                
+                const buttonsDiv = document.getElementById('modalButtons');
+                buttonsDiv.innerHTML = '';
+                
+                if (showCancel) {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'modal-btn';
+                    cancelBtn.textContent = 'Cancel';
+                    cancelBtn.onclick = () => {
+                        modal.classList.remove('active');
+                        this.vibrate(10);
+                    };
+                    buttonsDiv.appendChild(cancelBtn);
+                    
+                    const confirmBtn = document.createElement('button');
+                    confirmBtn.className = 'modal-btn';
+                    confirmBtn.textContent = 'Confirm';
+                    confirmBtn.onclick = () => {
+                        modal.classList.remove('active');
+                        if (onConfirm) onConfirm();
+                        this.vibrate(10);
+                    };
+                    buttonsDiv.appendChild(confirmBtn);
+                } else if (showNextButton) {
+                    const nextBtn = document.createElement('button');
+                    nextBtn.className = 'modal-btn';
+                    nextBtn.textContent = '→ Next Puzzle';
+                    nextBtn.onclick = () => {
+                        modal.classList.remove('active');
+                        this.nextGame();
+                        this.vibrate(10);
+                    };
+                    buttonsDiv.appendChild(nextBtn);
+                } else {
+                    const okBtn = document.createElement('button');
+                    okBtn.className = 'modal-btn';
+                    okBtn.textContent = 'OK';
+                    okBtn.onclick = () => {
+                        modal.classList.remove('active');
+                        this.vibrate(10);
+                    };
+                    buttonsDiv.appendChild(okBtn);
+                }
+                
+                modal.classList.add('active');
+            }
+
             bindEvents() {
+                // Wait a bit to ensure all elements are loaded
+                setTimeout(() => {
+                    // Enter button
+                    const enterBtn = document.getElementById('enterBtn');
+                    if (enterBtn) {
+                        enterBtn.addEventListener('click', () => {
+                            this.vibrate(15);
+                            this.playSound('click');
+                            document.getElementById('titleScreen').classList.add('fade-out');
+                            this.showTransition(() => {
+                                document.getElementById('titleScreen').style.display = 'none';
+                                document.getElementById('mainMenu').classList.add('active');
+                            });
+                        });
+                    }
+                }, 100);
+
+                // Menu buttons
+                const startGameBtn = document.getElementById('startGameBtn');
+                if (startGameBtn) {
+                    startGameBtn.addEventListener('click', () => {
+                        this.vibrate(15);
+                        this.playSound('click');
+                        document.getElementById('mainMenu').classList.add('fade-out');
+                        this.showTransition(() => {
+                            document.getElementById('mainMenu').classList.remove('active', 'fade-out');
+                            document.getElementById('gameScreen').classList.add('active');
+                            this.initializeGame();
+                        });
+                    });
+                }
+
+                const howToPlayBtn = document.getElementById('howToPlayBtn');
+                if (howToPlayBtn) {
+                    howToPlayBtn.addEventListener('click', () => {
+                        this.vibrate(10);
+                        this.playSound('click');
+                        document.getElementById('howToPlayScreen').classList.add('active');
+                    });
+                }
+
+                const statisticsBtn = document.getElementById('statisticsBtn');
+                if (statisticsBtn) {
+                    statisticsBtn.addEventListener('click', () => {
+                        this.vibrate(10);
+                        this.playSound('click');
+                        this.updateStatisticsDisplay();
+                        document.getElementById('statisticsScreen').classList.add('active');
+                    });
+                }
+
+                const aboutBtn = document.getElementById('aboutBtn');
+                if (aboutBtn) {
+                    aboutBtn.addEventListener('click', () => {
+                        this.vibrate(10);
+                        this.playSound('click');
+                        document.getElementById('aboutScreen').classList.add('active');
+                    });
+                }
+
+                // Close info screens
+                const closeHowToPlay = document.getElementById('closeHowToPlay');
+                if (closeHowToPlay) {
+                    closeHowToPlay.addEventListener('click', () => {
+                        this.vibrate(10);
+                        this.playSound('click');
+                        document.getElementById('howToPlayScreen').classList.remove('active');
+                    });
+                }
+
+                const closeStatistics = document.getElementById('closeStatistics');
+                if (closeStatistics) {
+                    closeStatistics.addEventListener('click', () => {
+                        this.vibrate(10);
+                        this.playSound('click');
+                        document.getElementById('statisticsScreen').classList.remove('active');
+                    });
+                }
+
+                const closeAbout = document.getElementById('closeAbout');
+                if (closeAbout) {
+                    closeAbout.addEventListener('click', () => {
+                        this.vibrate(10);
+                        this.playSound('click');
+                        document.getElementById('aboutScreen').classList.remove('active');
+                    });
+                }
+
+                // Game controls
+                document.getElementById('pauseBtn').addEventListener('click', () => {
+                    if (this.isPaused) {
+                        this.resumeGame();
+                    } else {
+                        this.pauseGame();
+                    }
+                });
+
+                document.getElementById('resumeBtn').addEventListener('click', () => {
+                    this.resumeGame();
+                });
+
+                document.getElementById('restartBtn').addEventListener('click', () => {
+                    this.restartGame();
+                });
+
+                document.getElementById('hintBtn').addEventListener('click', () => {
+                    this.useHint();
+                });
+
+                document.getElementById('mainMenuBtn').addEventListener('click', () => {
+                    this.vibrate(15);
+                    this.showModal('Return to Menu? 🏠', 'Your current progress will be lost.', true, () => {
+                        if (this.timerInterval) {
+                            clearInterval(this.timerInterval);
+                        }
+                        document.getElementById('gameScreen').classList.remove('active');
+                        document.getElementById('mainMenu').classList.add('active');
+                    });
+                });
+
                 // Grid clicks
                 document.getElementById('sudokuGrid').addEventListener('click', (e) => {
                     if (e.target.classList.contains('cell')) {
@@ -715,7 +1591,6 @@
                         const col = parseInt(e.target.dataset.col);
                         this.selectCell(row, col);
                     } else {
-                        // Clear selection when clicking empty space
                         document.querySelectorAll('.cell').forEach(cell => {
                             cell.classList.remove('selected', 'highlighted');
                         });
@@ -735,22 +1610,14 @@
                     });
                 });
 
-                // Control buttons
-                document.getElementById('hintBtn').addEventListener('click', () => this.useHint());
-                document.getElementById('nextBtn').addEventListener('click', () => this.nextGame());
-                document.getElementById('newGameBtn').addEventListener('click', () => this.nextGame());
-                document.getElementById('checkBtn').addEventListener('click', () => this.checkSolution());
-                
-                // Pause/Resume
-                document.getElementById('pauseBtn').addEventListener('click', () => {
-                    if (this.isPaused) {
-                        this.resumeGame();
-                    } else {
-                        this.pauseGame();
-                    }
+                // Action buttons
+                document.getElementById('submitBtn').addEventListener('click', () => {
+                    this.submitSolution();
                 });
-                
-                document.getElementById('resumeBtn').addEventListener('click', () => this.resumeGame());
+
+                document.getElementById('nextBtn').addEventListener('click', () => {
+                    this.nextGame();
+                });
 
                 // Keyboard support
                 document.addEventListener('keydown', (e) => {
@@ -768,7 +1635,7 @@
 
         // Initialize game when page loads
         window.addEventListener('load', () => {
-            new SudokuGame();
+            new ZenkuGame();
         });
     </script>
 </body>
