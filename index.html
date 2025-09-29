@@ -996,13 +996,22 @@
             }
 
             initScreens() {
+                console.log('Initializing screens...');
                 // Show loading screen for 3 seconds
                 setTimeout(() => {
-                    document.getElementById('loadingScreen').classList.add('fade-out');
-                    setTimeout(() => {
-                        document.getElementById('loadingScreen').style.display = 'none';
-                        document.getElementById('titleScreen').classList.add('active');
-                    }, 500);
+                    console.log('Hiding loading screen...');
+                    const loadingScreen = document.getElementById('loadingScreen');
+                    if (loadingScreen) {
+                        loadingScreen.classList.add('fade-out');
+                        setTimeout(() => {
+                            loadingScreen.style.display = 'none';
+                            const titleScreen = document.getElementById('titleScreen');
+                            if (titleScreen) {
+                                titleScreen.classList.add('active');
+                                console.log('Title screen shown');
+                            }
+                        }, 500);
+                    }
                 }, 3000);
             }
 
@@ -1615,7 +1624,13 @@
 
         // Initialize game when page loads
         window.addEventListener('load', () => {
-            new ZenkuGame();
+            console.log('Page loaded, starting Zenku game...');
+            try {
+                new ZenkuGame();
+                console.log('Zenku game initialized successfully');
+            } catch (error) {
+                console.error('Error initializing game:', error);
+            }
         });
     </script>
 </body>
