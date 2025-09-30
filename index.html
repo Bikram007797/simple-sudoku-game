@@ -19,7 +19,6 @@
             overflow-x: hidden;
         }
 
-        /* Loading Screen */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -62,7 +61,6 @@
             font-family: 'Noto Serif JP', serif;
         }
 
-        /* Title Screen */
         .title-screen {
             position: fixed;
             top: 0;
@@ -166,7 +164,6 @@
             to { opacity: 1; }
         }
 
-        /* Transition Screen */
         .transition-screen {
             position: fixed;
             top: 0;
@@ -206,7 +203,6 @@
             opacity: 0.8;
         }
 
-        /* Main Menu Screen */
         .main-menu {
             position: fixed;
             top: 0;
@@ -267,7 +263,6 @@
             box-shadow: 0 5px 20px rgba(141, 115, 85, 0.3);
         }
 
-        /* Info Screens (How to Play, Statistics, About) */
         .info-screen {
             position: fixed;
             top: 0;
@@ -278,7 +273,7 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 9996;
+            z-index: 10001;
             padding: 20px;
         }
 
@@ -334,7 +329,6 @@
             box-shadow: 0 5px 15px rgba(141, 115, 85, 0.3);
         }
 
-        /* Game Screen */
         .game-screen {
             display: none;
             min-height: 100vh;
@@ -562,7 +556,6 @@
             box-shadow: 0 8px 20px rgba(141, 115, 85, 0.3);
         }
 
-        /* Pause Overlay */
         .pause-overlay {
             position: fixed;
             top: 0;
@@ -573,7 +566,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 9995;
+            z-index: 10002;
         }
 
         .pause-overlay.active {
@@ -616,7 +609,6 @@
             box-shadow: 0 10px 30px rgba(141, 115, 85, 0.4);
         }
 
-        /* Modal for messages */
         .modal {
             position: fixed;
             top: 0;
@@ -627,7 +619,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 9994;
+            z-index: 10003;
         }
 
         .modal.active {
@@ -688,7 +680,6 @@
             box-shadow: 0 5px 15px rgba(141, 115, 85, 0.3);
         }
 
-        /* Responsive */
         @media (max-width: 600px) {
             .game-title {
                 font-size: 2.5em;
@@ -710,13 +701,11 @@
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="zen-circle"></div>
         <div class="loading-text">Zenku: The Path of Nine</div>
     </div>
 
-    <!-- Title Screen -->
     <div class="title-screen" id="titleScreen">
         <h1 class="game-title">Zenku: The Path of Nine</h1>
         <p class="game-subtitle">A Peaceful 9 × 9 Sudoku for Mindful Play</p>
@@ -724,13 +713,11 @@
         <div class="developer-credit">Developed by Bikram</div>
     </div>
 
-    <!-- Transition Screen -->
     <div class="transition-screen" id="transitionScreen">
         <div class="transition-text" id="transitionText">Zenku</div>
         <div class="transition-subtext" id="transitionSubtext">Developed by Bikram</div>
     </div>
 
-    <!-- Main Menu -->
     <div class="main-menu" id="mainMenu">
         <h1 class="menu-title">Zenku</h1>
         <div class="menu-options">
@@ -741,7 +728,6 @@
         </div>
     </div>
 
-    <!-- Info Screens -->
     <div class="info-screen" id="howToPlayScreen">
         <div class="info-content">
             <h2 class="info-title">How to Play 📖</h2>
@@ -765,7 +751,7 @@
                 <strong>Tips:</strong><br>
                 • Start with rows/columns that have many numbers<br>
                 • Look for numbers that can only go in one place<br>
-                • Take your time and breathe 🧘
+                • Take your time and breathe
             </div>
             <button class="close-btn" id="closeHowToPlay">Close</button>
         </div>
@@ -805,7 +791,7 @@
                 
                 Every element is designed to promote calm and composure. Immerse yourself in a peaceful aesthetic featuring muted, natural colours and soothing, ambient soundscapes. There are no harsh timers or jarring alerts—just the satisfying, quiet moment of true concentration.<br><br>
                 
-                Solve, meditate, and achieve Satori (sudden enlightenment) as you complete each grid. If you seek a focused retreat and an experience that is gentle on the eyes and good for the soul, Zenku is your sanctuary. 🧘‍♂️<br><br>
+                Solve, meditate, and achieve Satori (sudden enlightenment) as you complete each grid. If you seek a focused retreat and an experience that is gentle on the eyes and good for the soul, Zenku is your sanctuary.<br><br>
                 
                 <strong>Developer:</strong><br>
                 This game was lovingly developed by <strong>Bikram</strong> with the intention of bringing peace and mindfulness to your daily practice.
@@ -814,7 +800,6 @@
         </div>
     </div>
 
-    <!-- Game Screen -->
     <div class="game-screen" id="gameScreen">
         <div class="game-container">
             <div class="game-header">
@@ -844,7 +829,7 @@
 
             <div class="sudoku-grid" id="sudokuGrid"></div>
 
-            <div class="number-pad">
+            <div class="number-pad" id="numberPad">
                 <button class="number-btn" data-number="1">1</button>
                 <button class="number-btn" data-number="2">2</button>
                 <button class="number-btn" data-number="3">3</button>
@@ -864,7 +849,6 @@
         </div>
     </div>
 
-    <!-- Pause Overlay -->
     <div class="pause-overlay" id="pauseOverlay">
         <div class="pause-content">
             <h2 class="pause-title">Paused 🧘</h2>
@@ -873,7 +857,6 @@
         </div>
     </div>
 
-    <!-- Modal -->
     <div class="modal" id="modal">
         <div class="modal-content">
             <h2 class="modal-title" id="modalTitle">Message</h2>
@@ -885,8 +868,23 @@
     </div>
 
     <script>
+        console.log('Script starting...');
+        
+        // Immediately hide loading screen after 3 seconds
+        setTimeout(function() {
+            console.log('Hiding loading screen');
+            const loading = document.getElementById('loadingScreen');
+            loading.classList.add('fade-out');
+            setTimeout(function() {
+                loading.style.display = 'none';
+                document.getElementById('titleScreen').classList.add('active');
+                console.log('Title screen shown');
+            }, 500);
+        }, 3000);
+
         class ZenkuGame {
             constructor() {
+                console.log('ZenkuGame constructor called');
                 this.grid = Array(9).fill().map(() => Array(9).fill(0));
                 this.solution = Array(9).fill().map(() => Array(9).fill(0));
                 this.initialGrid = Array(9).fill().map(() => Array(9).fill(0));
@@ -899,12 +897,10 @@
                 this.isPaused = false;
                 this.gameStarted = false;
                 this.soundEnabled = true;
-                
-                // Statistics
                 this.stats = this.loadStats();
                 
-                this.initScreens();
                 this.bindEvents();
+                console.log('ZenkuGame initialized');
             }
 
             loadStats() {
@@ -957,62 +953,46 @@
             playSound(type) {
                 if (!this.soundEnabled) return;
                 
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                if (type === 'correct') {
-                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
-                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.3);
-                } else if (type === 'wrong') {
-                    oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime + 0.15);
-                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.4);
-                } else if (type === 'complete') {
-                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.15);
-                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.3);
-                    gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.6);
-                } else if (type === 'click') {
-                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.1);
-                }
-            }
-
-            initScreens() {
-                console.log('Initializing screens...');
-                // Show loading screen for 3 seconds
-                setTimeout(() => {
-                    console.log('Hiding loading screen...');
-                    const loadingScreen = document.getElementById('loadingScreen');
-                    if (loadingScreen) {
-                        loadingScreen.classList.add('fade-out');
-                        setTimeout(() => {
-                            loadingScreen.style.display = 'none';
-                            const titleScreen = document.getElementById('titleScreen');
-                            if (titleScreen) {
-                                titleScreen.classList.add('active');
-                                console.log('Title screen shown');
-                            }
-                        }, 500);
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    if (type === 'correct') {
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.3);
+                    } else if (type === 'wrong') {
+                        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                        oscillator.frequency.setValueAtTime(200, audioContext.currentTime + 0.15);
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.4);
+                    } else if (type === 'complete') {
+                        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.15);
+                        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.3);
+                        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.6);
+                    } else if (type === 'click') {
+                        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.1);
                     }
-                }, 3000);
+                } catch (e) {
+                    console.log('Audio not supported');
+                }
             }
 
             showTransition(callback) {
@@ -1209,7 +1189,9 @@
                 
                 this.selectedCell = { row, col };
                 const selectedElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                selectedElement.classList.add('selected');
+                if (selectedElement) {
+                    selectedElement.classList.add('selected');
+                }
                 
                 const value = this.grid[row][col];
                 if (value !== 0) {
@@ -1264,13 +1246,13 @@
 
             useHint() {
                 if (this.hintsUsed >= this.maxHints) {
-                    this.showModal('No Hints Left 💡', 'You have used all 3 hints for this puzzle. Keep trying! 💪');
+                    this.showModal('No Hints Left 💡', 'You have used all 3 hints for this puzzle. Keep trying!');
                     this.vibrate(20);
                     return;
                 }
                 
                 if (!this.selectedCell) {
-                    this.showModal('Select a Cell 👆', 'Please select an empty cell to get a hint.');
+                    this.showModal('Select a Cell', 'Please select an empty cell to get a hint.');
                     this.vibrate(20);
                     return;
                 }
@@ -1278,13 +1260,13 @@
                 const { row, col } = this.selectedCell;
                 
                 if (this.initialGrid[row][col] !== 0) {
-                    this.showModal('Already Given 🎯', 'This number was provided at the start. Try selecting an empty cell.');
+                    this.showModal('Already Given', 'This number was provided at the start. Try selecting an empty cell.');
                     this.vibrate(20);
                     return;
                 }
 
                 if (this.grid[row][col] !== 0) {
-                    this.showModal('Cell Filled ✏️', 'This cell already has a number. Try selecting an empty cell.');
+                    this.showModal('Cell Filled', 'This cell already has a number. Try selecting an empty cell.');
                     this.vibrate(20);
                     return;
                 }
@@ -1300,12 +1282,6 @@
                 this.updateDisplay();
                 this.selectCell(row, col);
                 
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                cell.style.animation = 'none';
-                setTimeout(() => {
-                    cell.style.animation = 'pulse 0.3s ease-in-out';
-                }, 10);
-                
                 this.playSound('correct');
                 this.vibrate(15);
             }
@@ -1313,68 +1289,59 @@
             submitSolution() {
                 this.vibrate(15);
                 
-                // Count filled cells
                 let filledCount = 0;
-                let correctCount = 0;
                 const errors = [];
                 
                 for (let row = 0; row < 9; row++) {
                     for (let col = 0; col < 9; col++) {
                         if (this.grid[row][col] !== 0) {
                             filledCount++;
-                            if (this.grid[row][col] === this.solution[row][col]) {
-                                correctCount++;
-                            } else {
+                            if (this.grid[row][col] !== this.solution[row][col]) {
                                 errors.push({ row, col });
                             }
                         }
                     }
                 }
                 
-                // Clear previous error highlighting
                 document.querySelectorAll('.cell').forEach(cell => {
                     cell.classList.remove('error');
                 });
                 
-                // Case 1: No cells filled
                 if (filledCount === 0) {
-                    this.showModal('Not Started Yet 😅', 'You haven\'t filled a single cell yet! Take your time and begin your journey. 🧘‍♂️');
+                    this.showModal('Not Started Yet', 'You haven\'t filled a single cell yet! Take your time and begin your journey.');
                     this.playSound('wrong');
                     return;
                 }
                 
-                // Case 2 & 4: Some/all cells filled, all correct
                 if (errors.length === 0) {
                     if (filledCount < 81) {
-                        // Case 2: Partial but all correct
-                        this.showModal('Getting Better! 🌱', 'Keep going! All your entries are correct so far. You\'re on the right path. 💚');
+                        this.showModal('Getting Better!', 'Keep going! All your entries are correct so far. You\'re on the right path.');
                         this.playSound('correct');
                     } else {
-                        // Case 4: Complete and all correct!
                         this.completeGame();
                     }
                     return;
                 }
                 
-                // Case 3 & 5: Some/all wrong
                 errors.forEach(({ row, col }) => {
                     const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                    cell.classList.add('error');
+                    if (cell) cell.classList.add('error');
                 });
                 
                 this.playSound('wrong');
                 this.vibrate([20, 100, 20]);
                 
                 const errorText = errors.length === 1 ? '1 mistake' : `${errors.length} mistakes`;
-                this.showModal('Oops, Mistakes Found 😔', `You made ${errorText}. The incorrect cells are highlighted. Take a deep breath and try again. 🍃`);
+                this.showModal('Oops, Mistakes Found', `You made ${errorText}. The incorrect cells are highlighted. Take a deep breath and try again.`);
             }
 
             completeGame() {
-                clearInterval(this.timerInterval);
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
                 this.playSound('complete');
                 this.vibrate([50, 100, 50, 100, 50]);
                 
-                // Update statistics
                 this.stats.gamesCompleted++;
                 this.stats.totalTime += this.elapsedTime;
                 
@@ -1389,14 +1356,14 @@
                 const seconds = this.elapsedTime % 60;
                 const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 
-                let message = `🎉 Time: ${timeStr}`;
+                let message = `Time: ${timeStr}`;
                 if (isNewRecord) {
-                    message += '<br>🏆 New Best Time!';
+                    message += '<br>New Best Time!';
                 }
-                message += `<br>💡 Hints used: ${this.hintsUsed}/3`;
-                message += '<br><br>You have achieved Satori! ✨';
+                message += `<br>Hints used: ${this.hintsUsed}/3`;
+                message += '<br><br>You have achieved Satori!';
                 
-                this.showModal('Congratulations! 🎊', message, false, null, true);
+                this.showModal('Congratulations!', message, false, null, true);
                 this.updateDisplay();
             }
 
@@ -1409,7 +1376,10 @@
 
             updateDisplay() {
                 document.getElementById('hintsLeft').textContent = `${this.maxHints - this.hintsUsed}`;
-                document.getElementById('hintBtn').disabled = this.hintsUsed >= this.maxHints;
+                const hintBtn = document.getElementById('hintBtn');
+                if (hintBtn) {
+                    hintBtn.disabled = this.hintsUsed >= this.maxHints;
+                }
                 
                 if (this.stats.bestTime) {
                     const minutes = Math.floor(this.stats.bestTime / 60);
@@ -1451,7 +1421,7 @@
                 } else if (showNextButton) {
                     const nextBtn = document.createElement('button');
                     nextBtn.className = 'modal-btn';
-                    nextBtn.textContent = '→ Next Puzzle';
+                    nextBtn.textContent = 'Next Puzzle';
                     nextBtn.onclick = () => {
                         modal.classList.remove('active');
                         this.nextGame();
@@ -1473,12 +1443,13 @@
             }
 
             bindEvents() {
-                // Use event delegation for better reliability
+                console.log('Binding events...');
+                
                 document.body.addEventListener('click', (e) => {
                     const target = e.target;
                     
-                    // Enter button
                     if (target.id === 'enterBtn') {
+                        console.log('Enter clicked');
                         this.vibrate(15);
                         this.playSound('click');
                         document.getElementById('titleScreen').classList.add('fade-out');
@@ -1488,7 +1459,6 @@
                         });
                     }
                     
-                    // Start Game button
                     if (target.id === 'startGameBtn') {
                         console.log('Start Game clicked');
                         this.vibrate(15);
@@ -1501,7 +1471,6 @@
                         });
                     }
                     
-                    // How to Play button
                     if (target.id === 'howToPlayBtn') {
                         console.log('How to Play clicked');
                         this.vibrate(10);
@@ -1509,7 +1478,6 @@
                         document.getElementById('howToPlayScreen').classList.add('active');
                     }
                     
-                    // Statistics button
                     if (target.id === 'statisticsBtn') {
                         console.log('Statistics clicked');
                         this.vibrate(10);
@@ -1518,7 +1486,6 @@
                         document.getElementById('statisticsScreen').classList.add('active');
                     }
                     
-                    // About button
                     if (target.id === 'aboutBtn') {
                         console.log('About clicked');
                         this.vibrate(10);
@@ -1526,27 +1493,21 @@
                         document.getElementById('aboutScreen').classList.add('active');
                     }
                     
-                    // Close info screens
                     if (target.id === 'closeHowToPlay') {
                         this.vibrate(10);
-                        this.playSound('click');
                         document.getElementById('howToPlayScreen').classList.remove('active');
                     }
                     
                     if (target.id === 'closeStatistics') {
                         this.vibrate(10);
-                        this.playSound('click');
                         document.getElementById('statisticsScreen').classList.remove('active');
                     }
                     
                     if (target.id === 'closeAbout') {
                         this.vibrate(10);
-                        this.playSound('click');
                         document.getElementById('aboutScreen').classList.remove('active');
                     }
-                });
-
-                    // Pause button
+                    
                     if (target.id === 'pauseBtn') {
                         if (this.isPaused) {
                             this.resumeGame();
@@ -1555,25 +1516,21 @@
                         }
                     }
                     
-                    // Resume button
                     if (target.id === 'resumeBtn') {
                         this.resumeGame();
                     }
                     
-                    // Restart button
                     if (target.id === 'restartBtn') {
                         this.restartGame();
                     }
                     
-                    // Hint button
                     if (target.id === 'hintBtn') {
                         this.useHint();
                     }
                     
-                    // Main Menu button
                     if (target.id === 'mainMenuBtn') {
                         this.vibrate(15);
-                        this.showModal('Return to Menu? 🏠', 'Your current progress will be lost.', true, () => {
+                        this.showModal('Return to Menu?', 'Your current progress will be lost.', true, () => {
                             if (this.timerInterval) {
                                 clearInterval(this.timerInterval);
                             }
@@ -1582,33 +1539,30 @@
                         });
                     }
                     
-                    // Submit button
                     if (target.id === 'submitBtn') {
                         this.submitSolution();
                     }
                     
-                    // Next button
                     if (target.id === 'nextBtn') {
                         this.nextGame();
                     }
-                });
-
-                
-                // Grid clicks
-                document.getElementById('sudokuGrid').addEventListener('click', (e) => {
-                    if (e.target.classList.contains('cell')) {
-                        const row = parseInt(e.target.dataset.row);
-                        const col = parseInt(e.target.dataset.col);
+                    
+                    if (target.classList.contains('number-btn')) {
+                        const number = target.dataset.number;
+                        if (number === 'backspace') {
+                            this.deleteNumber();
+                        } else if (number) {
+                            this.placeNumber(parseInt(number));
+                        }
+                    }
+                    
+                    if (target.classList.contains('cell')) {
+                        const row = parseInt(target.dataset.row);
+                        const col = parseInt(target.dataset.col);
                         this.selectCell(row, col);
-                    } else {
-                        document.querySelectorAll('.cell').forEach(cell => {
-                            cell.classList.remove('selected', 'highlighted');
-                        });
-                        this.selectedCell = null;
                     }
                 });
 
-                // Keyboard support
                 document.addEventListener('keydown', (e) => {
                     if (this.isPaused) return;
                     
@@ -1619,15 +1573,17 @@
                         this.deleteNumber();
                     }
                 });
+                
+                console.log('Events bound successfully');
             }
         }
 
-        // Initialize game when page loads
         window.addEventListener('load', () => {
-            console.log('Page loaded, starting Zenku game...');
+            console.log('Window loaded');
             try {
-                new ZenkuGame();
-                console.log('Zenku game initialized successfully');
+                const game = new ZenkuGame();
+                window.zenkuGame = game;
+                console.log('Game initialized successfully');
             } catch (error) {
                 console.error('Error initializing game:', error);
             }
